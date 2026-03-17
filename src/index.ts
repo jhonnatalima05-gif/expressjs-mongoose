@@ -15,6 +15,18 @@ app.get("/", async (req, res) => {
 
 app.use("/countries", countryRoutes);
 
+app.post("/webhook", (req, res) => {
+  const token = req.headers["x-token"];
+
+  if (token !== process.env.TICTO_TOKEN) {
+    console.log("❌ Token inválido");
+    return res.sendStatus(401);
+  }
+
+  console.log("🔥 WEBHOOK RECEBIDO:", req.body);
+  res.sendStatus(200);
+});
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
