@@ -14,7 +14,10 @@ app.get("/", async (req, res) => {
 });
 
 app.use("/countries", countryRoutes);
-
+app.post("/webhook", (req, res) => {
+  console.log("🔥 WEBHOOK RECEBIDO:", req.body);
+  res.sendStatus(200);
+});
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
