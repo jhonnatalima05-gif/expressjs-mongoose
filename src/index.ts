@@ -73,10 +73,15 @@ app.post("/webhook", async (req, res) => {
           event_name: "Purchase",
           event_time: Math.floor(Date.now() / 1000),
           action_source: "website",
-          user_data: {
-            em: email ? [email] : undefined,
-            ph: phone ? [phone] : undefined,
-          },
+user_data: {
+  em: email ? [email] : undefined,
+  ph: phone ? [phone] : undefined,
+  fn: customer.name ? [sha256(customer.name.split(" ")[0])] : undefined,
+  ln: customer.name ? [sha256(customer.name.split(" ").slice(1).join(" "))] : undefined,
+  ct: customer.address?.city ? [sha256(customer.address.city)] : undefined,
+  st: customer.address?.state ? [sha256(customer.address.state)] : undefined,
+ country: [sha256("br")],
+},
           custom_data: {
             currency: "BRL",
             value,
