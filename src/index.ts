@@ -43,7 +43,7 @@ app.post("/webhook", async (req, res) => {
 
     // Só envia Purchase quando a venda estiver realmente aprovada/realizada
     // Ajuste conforme o texto exato que a Ticto mandar no seu payload real
-    const approvedStatuses = ["approved", "paid", "completed", "finished", "realized", "venda_realizada"];
+    const approvedStatuses = ["authorized", "approved", "paid", "completed", "finished", "realized", "venda_realizada"];
     const normalizedStatus = String(status).toLowerCase();
 
     if (!approvedStatuses.includes(normalizedStatus)) {
