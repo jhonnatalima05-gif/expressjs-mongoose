@@ -8,6 +8,7 @@ import { decidirAprovacao } from "./tools/actions";
 import { panorama } from "./tools/operation";
 import { gerarRelatorioDiario, rodarMineracao } from "./scheduler";
 import { oportunidades } from "./seasonality";
+import { checklist } from "./status";
 import { sintetizarFala, vozConfigurada } from "./integrations/voz";
 import { assinaturaValida, extrairMensagens } from "./integrations/whatsapp";
 import { receberMensagemWhatsApp } from "./recovery";
@@ -105,6 +106,8 @@ routes.get("/voz/novidades", assincrono(async (req, res) => {
     alertas: alertas.map((a: any) => ({ nivel: a.nivel, titulo: a.titulo, em: a.createdAt })),
   });
 }));
+
+routes.get("/status", (_req, res) => res.json(checklist()));
 
 routes.get("/panorama", assincrono(async (_req, res) => res.json(await panorama())));
 

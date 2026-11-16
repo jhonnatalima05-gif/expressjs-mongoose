@@ -11,10 +11,12 @@ import { AlertModel, ApprovalModel, OwnerMemoryModel } from "./models";
 import { definirAutonomia, definirPausa } from "./settings";
 import { gerarRelatorioDiario, rodarMineracao } from "./scheduler";
 import { oportunidades } from "./seasonality";
+import { checklistTexto } from "./status";
 
 const AJUDA = `À disposição, Senhor. Pode falar comigo normalmente — ordens, perguntas, "o que acontece se...".
 
 Atalhos:
+/status — o que já está configurado e o que falta
 /panorama — como está a operação agora
 /relatorio — gerar o relatório completo agora
 /oportunidades — janelas do ano: o que está em alta e o que preparar
@@ -70,6 +72,8 @@ async function tratarTexto(texto: string) {
     case "/start":
     case "/ajuda":
       return enviarMensagem(chat, AJUDA);
+    case "/status":
+      return enviarMensagem(chat, checklistTexto());
     case "/panorama":
       return enviarMensagem(chat, await textoPanorama());
     case "/relatorio":
@@ -174,6 +178,7 @@ export async function iniciarBotTelegram() {
   await telegram("deleteWebhook", {}).catch(() => undefined);
   await telegram("setMyCommands", {
     commands: [
+      { command: "status", description: "O que está configurado e o que falta" },
       { command: "panorama", description: "Como está a operação agora" },
       { command: "relatorio", description: "Relatório completo agora" },
       { command: "oportunidades", description: "Janelas do ano e o que preparar" },

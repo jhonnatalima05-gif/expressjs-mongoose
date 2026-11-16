@@ -55,7 +55,7 @@ Tempo total estimado: uma tarde para as fases 1 a 4; as outras dependem de aprov
 3. **Abra o seu bot e mande qualquer mensagem** (um bot não consegue falar com quem nunca falou com ele).
 4. No Railway: `TELEGRAM_BOT_TOKEN` = token e `TELEGRAM_CHAT_ID` = seu Id.
 
-✅ **Teste:** nos logs aparece `📱 Controle pelo Telegram ativo`. Mande `/start` para o bot: ele responde com os comandos. Mande `/panorama` (os números vão estar zerados, é normal). Mande "Jarvis, você está aí?".
+✅ **Teste:** nos logs aparece `📱 Controle pelo Telegram ativo`. Mande `/start` para o bot: ele responde com os comandos. Mande **`/status`**: ele mostra ✅/❌ de cada integração e o que falta. Use esse comando ao longo de todas as fases para acompanhar o progresso. Mande `/panorama` (os números vão estar zerados, é normal). Mande "Jarvis, você está aí?".
 
 ## Fase 4: O seu jeito de pensar (perfil e catálogo)
 
@@ -69,12 +69,18 @@ Edite pelo próprio GitHub (abra o arquivo → lápis ✏️ → *Commit changes
 
 ## Fase 5: As vendas (webhook da plataforma)
 
-1. No painel da sua plataforma (Ticto, Cakto…), cadastre o webhook com a URL `https://SEU-APP/webhook`.
-2. Marque **os dois eventos**: venda aprovada **e** PIX gerado / aguardando pagamento. Sem o segundo, a recuperação de PIX não funciona.
-3. Faça uma compra de teste de valor baixo: gere um PIX, **não pague**, e depois faça outra e **pague**.
+**Se você usa a Cakto** (o JARVIS já entende o formato oficial dela):
+1. Painel Cakto → **Apps → Webhooks → Novo**. URL: `https://SEU-APP/webhook`.
+2. Marque os eventos: **Compra aprovada**, **Pix gerado**, **Pix expirado** (e, se quiser, Compra recusada e Reembolso).
+3. Copie o **secret** que a Cakto gerar para esse webhook e coloque no Railway como `CAKTO_WEBHOOK_SECRET`. Assim, o JARVIS recusa qualquer requisição que não venha da Cakto.
+4. No painel, use **Testar webhook** para mandar um evento de exemplo.
 
-✅ **Teste:** nos logs aparece `🔥 WEBHOOK RECEBIDO` com o conteúdo. Mande `/panorama`: deve contar a venda.
-⚠️ Cada plataforma usa nomes diferentes para os status e campos. **Copie o log do webhook do PIX gerado (apague nome, e-mail e telefone) e mande para o Claude** para ele ajustar `STATUS_AGUARDANDO` e os campos do código PIX ao seu formato exato.
+**Se você usa a Ticto ou outra plataforma:**
+1. Cadastre o webhook com a URL `https://SEU-APP/webhook`, marcando **venda aprovada** e **PIX gerado / aguardando pagamento**.
+2. Os nomes de status variam entre plataformas: se o PIX gerado não for reconhecido, copie a linha `🔥 WEBHOOK RECEBIDO` do log e mande para o Claude.
+
+✅ **Teste (as duas):** gere um PIX de valor baixo e **não pague**; depois faça outra compra e **pague**. Nos logs aparece `🔥 WEBHOOK RECEBIDO` (sem dados pessoais). No Telegram, `/panorama` conta a venda, e a conversa de recuperação aparece em `GET /jarvis/recuperacao`.
+Eventos repetidos (a plataforma reenvia quando demora) são ignorados automaticamente.
 
 ## Fase 6: Os anúncios (Meta Ads)
 

@@ -11,6 +11,9 @@ const SaleSchema = new Schema(
     clienteEmail: String,
     clienteNome: String,
     clienteTelefone: String,
+    plataforma: String,
+    evento: String,
+    pedidoId: { type: String, index: true },
     raw: Schema.Types.Mixed,
   },
   { timestamps: true }

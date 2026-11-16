@@ -142,6 +142,20 @@ export async function registrarPixPendente(p: PixPendente) {
   });
 }
 
+// O PIX venceu: o código antigo não serve mais; a closer passa a mandar o link para gerar outro.
+export async function registrarPixExpirado(p: { email?: string; telefone?: string }) {
+  const telefone = wa.normalizarTelefone(p.telefone);
+  const email = p.email?.toLowerCase().trim();
+  const ou = [...(telefone ? [{ telefone }] : []), ...(email ? [{ email }] : [])];
+  if (!ou.length) return;
+  const convs = await ConversationModel.find({ status: { $in: ["aguardando", "contatado", "em_conversa"] }, $or: ou });
+  for (const c of convs) {
+    c.pixCodigo = undefined;
+    c.mensagens.push({ de: "sistema", texto: "O PIX expirou. Para pagar, o cliente precisa gerar um novo pelo link da oferta." } as any);
+    await c.save();
+  }
+}
+
 export async function registrarPagamento(p: { email?: string; telefone?: string; valor?: number }) {
   const telefone = wa.normalizarTelefone(p.telefone);
   const email = p.email?.toLowerCase().trim();
