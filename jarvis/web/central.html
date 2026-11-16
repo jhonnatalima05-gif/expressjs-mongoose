@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05080d">
+<title>JARVIS — Central</title>
+<style>
+  :root {
+    --fundo: #05080d; --painel: #0b1119; --linha: #16212e; --texto: #d7e3ee; --suave: #7d8fa3;
+    --ciano: #4fd1ff; --ambar: #ffb547; --verde: #49e3a4; --vermelho: #ff5d6c;
+    --cor: var(--suave);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--fundo); color: var(--texto);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 18px; }
+  header { width: 100%; max-width: 720px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { font-size: 15px; letter-spacing: .32em; margin: 0; font-weight: 600; }
+  header span { color: var(--suave); font-size: 13px; }
+  .nucleo { position: relative; width: min(64vw, 280px); aspect-ratio: 1; margin-top: 8px; }
+  .nucleo svg { width: 100%; height: 100%; overflow: visible; }
+  .anel { fill: none; stroke: var(--cor); transition: stroke .4s; }
+  .giro { transform-origin: 50% 50%; animation: giro 18s linear infinite; }
+  .giro.rev { animation-direction: reverse; animation-duration: 26s; }
+  .miolo { fill: var(--cor); opacity: .14; transition: fill .4s; transform-origin: 50% 50%; }
+  body[data-estado="ouvindo"]  { --cor: var(--ciano); }
+  body[data-estado="pensando"] { --cor: var(--ambar); }
+  body[data-estado="falando"]  { --cor: var(--verde); }
+  body[data-estado="erro"]     { --cor: var(--vermelho); }
+  body[data-estado="ouvindo"] .miolo, body[data-estado="falando"] .miolo { animation: pulso 1.1s ease-in-out infinite; }
+  body[data-estado="pensando"] .giro { animation-duration: 3s; }
+  @keyframes giro { to { transform: rotate(360deg); } }
+  @keyframes pulso { 50% { transform: scale(1.12); opacity: .32; } }
+  .rotulo { position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+    font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--cor); }
+  .dica { color: var(--suave); text-align: center; max-width: 520px; margin: 0; }
+  .dica b { color: var(--texto); }
+  button, input { font: inherit; }
+  .btn { background: var(--cor); color: #031018; border: 0; border-radius: 999px; padding: 12px 26px;
+    font-weight: 600; cursor: pointer; }
+  body:not([data-estado]) .btn, body[data-estado="desligado"] .btn { background: var(--ciano); }
+  .registro { width: 100%; max-width: 720px; flex: 1; min-height: 120px; overflow-y: auto;
+    background: var(--painel); border: 1px solid var(--linha); border-radius: 14px; padding: 12px 14px; }
+  .msg { margin: 0 0 10px; }
+  .msg small { display: block; color: var(--suave); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .msg.dono p { color: var(--texto); } .msg.jarvis p { color: var(--ciano); } .msg.alerta p { color: var(--ambar); }
+  .msg p { margin: 2px 0 0; white-space: pre-wrap; }
+  form { width: 100%; max-width: 720px; display: flex; gap: 8px; }
+  form input { flex: 1; min-width: 0; background: var(--painel); color: var(--texto); border: 1px solid var(--linha);
+    border-radius: 999px; padding: 11px 16px; }
+  .config { position: fixed; inset: 0; background: rgba(2,4,8,.92); display: none; place-items: center; padding: 16px; }
+  .config.aberta { display: grid; }
+  .config div { background: var(--painel); border: 1px solid var(--linha); border-radius: 16px; padding: 20px;
+    width: 100%; max-width: 420px; display: grid; gap: 12px; }
+  .config input { background: var(--fundo); color: var(--texto); border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; }
+  .link { background: none; border: 0; color: var(--suave); text-decoration: underline; cursor: pointer; padding: 0; }
+</style>
+</head>
+<body data-estado="desligado">
+  <header>
+    <h1>J.A.R.V.I.S.</h1>
+    <span id="status">desligado</span>
+  </header>
+
+  <div class="nucleo" aria-hidden="true">
+    <svg viewBox="0 0 200 200">
+      <g class="giro"><circle class="anel" cx="100" cy="100" r="92" stroke-width="2" stroke-dasharray="40 14 6 14" /></g>
+      <g class="giro rev"><circle class="anel" cx="100" cy="100" r="76" stroke-width="5" stroke-dasharray="70 30" opacity=".7" /></g>
+      <circle class="anel" cx="100" cy="100" r="60" stroke-width="1" opacity=".5" />
+      <circle class="miolo" cx="100" cy="100" r="52" />
+    </svg>
+    <div class="rotulo" id="rotulo">em espera</div>
+  </div>
+
+  <p class="dica" id="dica">Toque em <b>Ativar</b> uma vez. Depois é só dizer <b>"Jarvis"</b> e falar o que precisa.</p>
+  <button class="btn" id="ativar">Ativar</button>
+
+  <section class="registro" id="registro" aria-live="polite"></section>
+
+  <form id="digitar">
+    <input id="entrada" placeholder="Ou digite uma ordem…" autocomplete="off">
+    <button class="btn" type="submit">Enviar</button>
+  </form>
+  <button class="link" id="abrirConfig">configurações</button>
+
+  <div class="config" id="config">
+    <div>
+      <strong>Configurar a central</strong>
+      <label>Senha do JARVIS (JARVIS_API_TOKEN)<br><input id="token" type="password" autocomplete="off"></label>
+      <label>Palavra de ativação<br><input id="palavra" value="jarvis"></label>
+      <button class="btn" id="salvarConfig">Salvar</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  };
+  let token = store.get("jarvis_token", "");
+  let palavra = store.get("jarvis_palavra", "jarvis");
+
+  // ---------------------------------------------------------------- estado e registro
+  const ROTULOS = { desligado: "em espera", dormindo: "atento", ouvindo: "ouvindo", pensando: "pensando", falando: "falando", erro: "erro" };
+  function estado(e, detalhe) {
+    document.body.dataset.estado = e;
+    $("rotulo").textContent = ROTULOS[e] || e;
+    $("status").textContent = detalhe || ROTULOS[e] || e;
+  }
+  function registrar(quem, texto) {
+    const div = document.createElement("div");
+    div.className = "msg " + quem;
+    const hora = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    div.innerHTML = `<small>${quem === "dono" ? "Senhor" : quem === "alerta" ? "Alerta" : "Jarvis"} · ${hora}</small><p></p>`;
+    div.querySelector("p").textContent = texto;
+    $("registro").appendChild(div);
+    $("registro").scrollTop = $("registro").scrollHeight;
+  }
+
+  // ---------------------------------------------------------------- API
+  async function api(caminho, corpo, opcoes = {}) {
+    const resp = await fetch("/jarvis" + caminho, {
+      method: corpo ? "POST" : "GET",
+      headers: { "Content-Type": "application/json", "x-jarvis-token": token },
+      body: corpo ? JSON.stringify(corpo) : undefined,
+      ...opcoes,
+    });
+    if (resp.status === 401 || resp.status === 503) { abrirConfig(); throw new Error("Senha inválida ou não configurada."); }
+    return resp;
+  }
+
+  // ---------------------------------------------------------------- fala
+  let falando = false;
+  let vozLocal = null;
+  function escolherVozLocal() {
+    const vozes = speechSynthesis.getVoices().filter((v) => /^pt(-|_)BR/i.test(v.lang));
+    const masculinas = /antonio|daniel|thiago|fabio|donato|humberto|julio|valerio|nicolau|male|masculin/i;
+    vozLocal = vozes.find((v) => masculinas.test(v.name) && /neural|natural|online|google/i.test(v.name))
+      || vozes.find((v) => masculinas.test(v.name)) || vozes[0] || null;
+  }
+  if ("speechSynthesis" in window) { escolherVozLocal(); speechSynthesis.onvoiceschanged = escolherVozLocal; }
+
+  function falarLocal(texto) {
+    return new Promise((ok) => {
+      if (!("speechSynthesis" in window)) return ok();
+      const u = new SpeechSynthesisUtterance(texto);
+      u.lang = "pt-BR"; u.rate = 1.02; u.pitch = 0.9;
+      if (vozLocal) u.voice = vozLocal;
+      u.onend = u.onerror = () => ok();
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    });
+  }
+
+  const audio = new Audio();
+  async function falar(texto) {
+    if (!texto) return;
+    falando = true;
+    pararEscuta();
+    estado("falando");
+    try {
+      const resp = await api("/voz/falar", { texto });
+      if (resp.status === 200) {
+        audio.src = URL.createObjectURL(await resp.blob());
+        await audio.play();
+        await new Promise((ok) => { audio.onended = audio.onerror = ok; });
+        URL.revokeObjectURL(audio.src);
+      } else {
+        await falarLocal(texto);
+      }
+    } catch {
+      await falarLocal(texto);
+    }
+    falando = false;
+    estado(ocupado ? "pensando" : modo === "ouvindo" ? "ouvindo" : "dormindo");
+    iniciarEscuta();
+  }
+
+  // ---------------------------------------------------------------- comandos
+  let ocupado = false;
+  async function executar(comando) {
+    comando = comando.trim();
+    if (!comando || ocupado) return;
+    ocupado = true;
+    modo = "dormindo";
+    registrar("dono", comando);
+    estado("pensando");
+    let respondeu = false;
+    const t1 = setTimeout(() => !respondeu && falar("Um momento, Senhor."), 2500);
+    const t2 = setTimeout(() => !respondeu && falar("Ainda estou cuidando disso, Senhor."), 30000);
+    try {
+      const resp = await api("/voz/comando", { texto: comando });
+      const json = await resp.json();
+      respondeu = true;
+      const texto = json.resposta || json.error || "Não consegui concluir, Senhor.";
+      registrar("jarvis", texto);
+      while (falando) await new Promise((r) => setTimeout(r, 200));
+      await falar(texto);
+    } catch (err) {
+      respondeu = true;
+      registrar("jarvis", "Falha de comunicação: " + err.message);
+      await falar("Perdi a conexão com o servidor, Senhor.");
+    } finally {
+      clearTimeout(t1); clearTimeout(t2);
+      ocupado = false;
+      if (!falando) estado(modo === "ouvindo" ? "ouvindo" : "dormindo");
+    }
+  }
+
+  // ---------------------------------------------------------------- escuta contínua
+  const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null;
+  let ligado = false;
+  let modo = "dormindo"; // dormindo: espera a palavra; ouvindo: próxima frase é o comando
+  let prazoOuvindo = null;
+
+  // O reconhecimento em português às vezes escreve "Jarvis" de outro jeito.
+  const variantes = () => {
+    const p = palavra.toLowerCase().trim();
+    const extras = p === "jarvis" ? ["jarvis", "jarvas", "jarves", "jarbas", "járvis", "jarvi", "djarvis", "jervis", "jarviz"] : [p];
+    return extras.map((v) => v.normalize("NFD").replace(/[̀-ͯ]/g, ""));
+  };
+  const semAcento = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+  function aposPalavra(frase) {
+    const f = semAcento(frase);
+    for (const v of variantes()) {
+      const i = f.search(new RegExp(`\\b${v}\\b`));
+      if (i >= 0) return frase.slice(i + v.length).replace(/^[\s,.!?:;-]+/, "");
+    }
+    return null;
+  }
+
+  function aoOuvir(frase) {
+    if (ocupado || falando) return;
+    if (modo === "ouvindo") {
+      clearTimeout(prazoOuvindo);
+      return executar(aposPalavra(frase) ?? frase);
+    }
+    const resto = aposPalavra(frase);
+    if (resto === null) return;
+    if (resto.split(/\s+/).filter(Boolean).length >= 2) return executar(resto);
+    // Só chamou: "Jarvis" → responde e espera o comando.
+    modo = "ouvindo";
+    falar("Pois não, Senhor?");
+    prazoOuvindo = setTimeout(() => { modo = "dormindo"; if (!falando && !ocupado) estado("dormindo"); }, 12000);
+  }
+
+  function iniciarEscuta() {
+    if (!ligado || !rec || falando) return;
+    try { rec.start(); } catch {}
+  }
+  function pararEscuta() { try { rec && rec.abort(); } catch {} }
+
+  function montarReconhecimento() {
+    rec = new Reconhecimento();
+    rec.lang = "pt-BR";
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (ev) => {
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        if (ev.results[i].isFinal) aoOuvir(ev.results[i][0].transcript);
+      }
+    };
+    rec.onerror = (ev) => {
+      if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
+        ligado = false;
+        estado("erro", "microfone bloqueado");
+        $("dica").innerHTML = "Permita o uso do <b>microfone</b> para este site e toque em Ativar de novo.";
+      }
+    };
+    // O navegador encerra a escuta depois de um tempo em silêncio: religa sempre.
+    rec.onend = () => { if (ligado && !falando) setTimeout(iniciarEscuta, 250); };
+  }
+
+  // ---------------------------------------------------------------- tela sempre ligada
+  let trava = null;
+  async function manterTelaLigada() {
+    try { if ("wakeLock" in navigator) trava = await navigator.wakeLock.request("screen"); } catch {}
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && ligado) { manterTelaLigada(); iniciarEscuta(); }
+  });
+
+  // ---------------------------------------------------------------- alertas falados
+  let desde = Date.now();
+  async function verificarNovidades() {
+    if (!ligado || !token) return;
+    try {
+      const json = await (await api("/voz/novidades?desde=" + desde)).json();
+      desde = json.agora || Date.now();
+      for (const a of json.alertas || []) {
+        registrar("alerta", a.titulo);
+        while (falando || ocupado) await new Promise((r) => setTimeout(r, 500));
+        await falar((a.nivel === "critico" ? "Senhor, alerta crítico. " : "Senhor, um aviso. ") + a.titulo);
+      }
+    } catch {}
+  }
+
+  // ---------------------------------------------------------------- ligar
+  async function ativar() {
+    if (!token) return abrirConfig();
+    if (ligado) {
+      ligado = false; pararEscuta(); estado("desligado"); $("ativar").textContent = "Ativar";
+      return;
+    }
+    // Esta toque desbloqueia áudio e microfone (os navegadores exigem um toque na primeira vez).
+    audio.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA";
+    audio.play().catch(() => {});
+    if (!Reconhecimento) {
+      estado("erro", "sem reconhecimento de voz");
+      $("dica").innerHTML = "Este navegador não reconhece voz. Use o <b>Google Chrome</b> (Android, Windows, Mac) ou o Edge. Você ainda pode digitar abaixo.";
+      return;
+    }
+    montarReconhecimento();
+    ligado = true;
+    $("ativar").textContent = "Desligar";
+    $("dica").innerHTML = `Atento. Diga <b>"${palavra}"</b> e o que precisa, por exemplo: <b>"${palavra}, como estão as vendas hoje?"</b>`;
+    estado("dormindo");
+    await manterTelaLigada();
+    iniciarEscuta();
+    falar("Online e à disposição, Senhor.");
+  }
+
+  // ---------------------------------------------------------------- configurações
+  function abrirConfig() {
+    $("token").value = token; $("palavra").value = palavra;
+    $("config").classList.add("aberta");
+  }
+  $("salvarConfig").onclick = () => {
+    token = $("token").value.trim(); palavra = $("palavra").value.trim() || "jarvis";
+    store.set("jarvis_token", token); store.set("jarvis_palavra", palavra);
+    $("config").classList.remove("aberta");
+  };
+  $("abrirConfig").onclick = abrirConfig;
+  $("ativar").onclick = ativar;
+  $("digitar").onsubmit = (e) => { e.preventDefault(); const t = $("entrada").value; $("entrada").value = ""; executar(t); };
+
+  setInterval(verificarNovidades, 30000);
+  if (!token) abrirConfig();
+})();
+</script>
+</body>
+</html>

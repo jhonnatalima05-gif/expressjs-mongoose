@@ -8,6 +8,7 @@ import { decidirAprovacao } from "./tools/actions";
 import { panorama } from "./tools/operation";
 import { gerarRelatorioDiario, rodarMineracao } from "./scheduler";
 import { oportunidades } from "./seasonality";
+import { sintetizarFala, vozConfigurada } from "./integrations/voz";
 import { assinaturaValida, extrairMensagens } from "./integrations/whatsapp";
 import { receberMensagemWhatsApp } from "./recovery";
 
@@ -48,6 +49,9 @@ function exigirToken(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Central de voz: a página é pública, mas tudo o que ela faz exige o token.
+routes.get("/central", (_req, res) => res.sendFile(path.resolve("jarvis/web/central.html")));
+
 routes.use(exigirToken);
 
 const assincrono =
@@ -73,6 +77,33 @@ routes.post("/agentes/:nome", assincrono(async (req, res) => {
   const tarefa = String(req.body?.tarefa || "").trim();
   if (!tarefa) return res.status(400).json({ error: "Envie { tarefa }" });
   res.json({ resultado: await rodarEspecialista(nome, tarefa, req.body?.contexto) });
+}));
+
+// ---- Voz ----
+routes.post("/voz/comando", assincrono(async (req, res) => {
+  const texto = String(req.body?.texto || "").trim();
+  if (!texto) return res.status(400).json({ error: "Envie { texto }" });
+  res.json({ resposta: await perguntarAoJarvis(texto, { canal: "voz", voz: true }) });
+}));
+
+routes.post("/voz/falar", assincrono(async (req, res) => {
+  const texto = String(req.body?.texto || "").trim();
+  if (!texto || !vozConfigurada()) return res.sendStatus(204); // a central usa a voz do aparelho
+  res.type("audio/mpeg").send(await sintetizarFala(texto));
+}));
+
+// Alertas novos para a central falar em voz alta sem ninguém perguntar.
+routes.get("/voz/novidades", assincrono(async (req, res) => {
+  const desde = new Date(Number(req.query.desde) || Date.now() - 60_000);
+  const alertas = await AlertModel.find({ createdAt: { $gt: desde }, nivel: { $in: ["atencao", "critico"] } })
+    .sort({ createdAt: 1 })
+    .limit(5)
+    .lean();
+  res.json({
+    agora: Date.now(),
+    vozPremium: vozConfigurada(),
+    alertas: alertas.map((a: any) => ({ nivel: a.nivel, titulo: a.titulo, em: a.createdAt })),
+  });
 }));
 
 routes.get("/panorama", assincrono(async (_req, res) => res.json(await panorama())));

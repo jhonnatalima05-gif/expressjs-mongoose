@@ -27,6 +27,21 @@ O JARVIS não mora no seu computador: ele roda num **servidor na nuvem (Railway)
 
 **Um cérebro só.** Todos os agentes (chefe e especialistas) usam o mesmo modelo de IA, o Claude, por uma única chave (`ANTHROPIC_API_KEY`). Não precisa de ChatGPT nem de outras IAs. O que ele usa de fora são apenas os **sistemas da sua operação** (Meta Ads, Telegram, e-mail e a plataforma de vendas), porque é ali que as ações acontecem.
 
+## Central de voz: "Jarvis, ..."
+
+Abra `https://SEU-APP.up.railway.app/jarvis/central` no **Google Chrome** (ou no Edge), informe a senha (`JARVIS_API_TOKEN`) e toque em **Ativar** uma vez. A partir daí é só falar:
+
+- *"Jarvis, como estão as vendas hoje?"*: ele responde em voz alta.
+- *"Jarvis"* (sozinho): ele responde *"Pois não, Senhor?"* e a próxima frase é a ordem.
+- Conversa normal na sala, sem dizer "Jarvis", é ignorada.
+- Alertas importantes ele fala sozinho: *"Senhor, alerta crítico…"*.
+- Ele lembra dos últimos minutos de conversa, então dá para continuar: *"e ontem?"*, *"pode fazer"*.
+- Tarefas demoradas (minerar, criar página) ele delega, avisa por voz e manda o resultado no Telegram.
+
+**Para ficar atento 24h:** deixe um aparelho dedicado com a central aberta e a tela ligada, carregando: um celular Android antigo, um tablet ou um PC. A página impede a tela de apagar. Celulares cortam o microfone de páginas em segundo plano, então ela precisa ficar aberta na tela. No iPhone/Safari a escuta contínua é instável; prefira Android ou PC com Chrome.
+
+**A voz:** por padrão ele usa a voz em português do aparelho. Para uma voz de qualidade, no estilo mordomo britânico, calma e refinada, crie uma conta na ElevenLabs, escolha uma voz masculina com esse perfil na biblioteca deles e preencha `ELEVENLABS_API_KEY` e `ELEVENLABS_VOICE_ID`. **Não use clone da voz de um ator** (do filme ou da dublagem): copiar a voz de uma pessoa real sem autorização viola os termos dessas plataformas e o direito de imagem/voz dela.
+
 ## Controle pelo celular (Telegram)
 
 Fale com ele como numa conversa: *"Jarvis, como foram as vendas hoje?"*, *"pausa o que estiver dando prejuízo"*, *"o que acontece se eu dobrar o orçamento?"*.

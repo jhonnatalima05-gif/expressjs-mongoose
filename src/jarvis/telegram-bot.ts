@@ -142,9 +142,9 @@ async function tratarTexto(texto: string) {
 
   // Conversa livre: vai direto para o JARVIS.
   await telegram("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => undefined);
-  const resposta = await perguntarAoJarvis(
-    `Mensagem do dono (via Telegram): ${texto}\n\nResponda de forma curta, como numa conversa de celular.`
-  );
+  const resposta = await perguntarAoJarvis(`${texto}\n\n(Via Telegram: responda curto, como numa conversa de celular.)`, {
+    canal: "telegram",
+  });
   return enviarMensagem(chat, resposta);
 }
 

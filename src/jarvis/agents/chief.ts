@@ -73,18 +73,50 @@ function ferramentas() {
 // Fila simples: uma execução do chefe por vez, para não tomar decisões conflitantes.
 let fila: Promise<unknown> = Promise.resolve();
 
-export function perguntarAoJarvis(mensagem: string): Promise<string> {
-  const execucao = fila.then(() =>
-    rodarAgente({
-      nome: "jarvis",
+// Memória de curto prazo por canal (voz, telegram...): para entender "e ontem?", "pode fazer", etc.
+type Troca = { dono: string; jarvis: string; em: number };
+const conversas = new Map<string, Troca[]>();
+const MEMORIA_TROCAS = 6;
+const MEMORIA_MIN = 30;
+
+const INSTRUCAO_VOZ = `
+Sua resposta será FALADA em voz alta pelo alto-falante do dono:
+- No máximo 3 frases curtas e naturais. Sem listas, títulos, emojis, links ou símbolos.
+- Valores: "três mil e duzentos reais", não "R$3.200,00". Arredonde.
+- Tarefa demorada (minerar, criar página, produto): delegue, diga em uma frase que a equipe já está trabalhando e que o resultado chega no Telegram.
+- Se não entendeu o pedido, pergunte de forma curta.`;
+
+export type OpcoesPergunta = { canal?: string; voz?: boolean };
+
+export function perguntarAoJarvis(mensagem: string, opcoes: OpcoesPergunta = {}): Promise<string> {
+  const canal = opcoes.canal;
+  const execucao = fila.then(async () => {
+    let prompt = mensagem;
+    if (canal) {
+      const recentes = (conversas.get(canal) || []).filter((t) => Date.now() - t.em < MEMORIA_MIN * 60_000);
+      if (recentes.length) {
+        const historico = recentes.map((t) => `Dono: ${t.dono}\nVocê: ${t.jarvis}`).join("\n\n");
+        prompt = `## Conversa recente (para contexto)\n${historico}\n\n## Nova mensagem do dono\n${mensagem}`;
+      }
+    }
+    if (opcoes.voz) prompt += `\n\n${INSTRUCAO_VOZ}`;
+
+    const resposta = await rodarAgente({
+      nome: canal ? `jarvis:${canal}` : "jarvis",
       model: config.chiefModel,
       system: systemChefe(),
       tools: ferramentas(),
-      prompt: mensagem,
-      effort: "high",
+      prompt,
+      effort: opcoes.voz ? "medium" : "high", // voz: responde mais rápido
       maxIteracoes: 40,
-    })
-  );
+    });
+
+    if (canal) {
+      const lista = [...(conversas.get(canal) || []), { dono: mensagem, jarvis: resposta, em: Date.now() }];
+      conversas.set(canal, lista.slice(-MEMORIA_TROCAS));
+    }
+    return resposta;
+  });
   fila = execucao.catch(() => undefined);
   return execucao;
 }
