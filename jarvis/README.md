@@ -38,6 +38,14 @@ Abra `https://SEU-APP.up.railway.app/jarvis/central` no **Google Chrome** (ou no
 - Ele lembra dos últimos minutos de conversa, então dá para continuar: *"e ontem?"*, *"pode fazer"*.
 - Tarefas demoradas (minerar, criar página) ele delega, avisa por voz e manda o resultado no Telegram.
 
+**Música de abertura:** nas *configurações* da central, escolha um arquivo de música seu (MP3/M4A, por exemplo uma faixa que você comprou). Ele fica guardado só naquele aparelho, nunca vai para o servidor nem para o GitHub. Ela toca:
+- quando a central liga: a música abre, depois de uns 6 segundos ele diz *"Online e à disposição, Senhor"* com a música baixinha por baixo, e ela termina em fade;
+- quando você pede *"Jarvis, análise rápida"* (ou "status geral", "como está tudo"): a música toca enquanto ele levanta os números, ele dá o resumo por cima e a música sai em fade.
+
+Dá para desligar cada uma e ajustar a duração. Músicas baixadas do Spotify/Apple Music não servem (são protegidas); use um arquivo de áudio comum.
+
+**Ligar junto com o computador:** em `jarvis/inicializacao/` há um atalho para cada sistema (Windows, Mac, Linux). Troque `SEU-APP` pelo seu endereço e siga as 3 linhas no topo do arquivo. Ele abre a central numa janela própria do Chrome, já liberada para tocar som, e ela liga sozinha (`?auto=1`). Na primeira vez, nessa janela, toque em **Ativar**, permita o microfone e escolha a música; das próximas vezes é só ligar o computador.
+
 **Para ficar atento 24h:** deixe um aparelho dedicado com a central aberta e a tela ligada, carregando: um celular Android antigo, um tablet ou um PC. A página impede a tela de apagar. Celulares cortam o microfone de páginas em segundo plano, então ela precisa ficar aberta na tela. No iPhone/Safari a escuta contínua é instável; prefira Android ou PC com Chrome.
 
 **A voz:** por padrão ele usa a voz em português do aparelho. Para uma voz de qualidade, no estilo mordomo britânico, calma e refinada, crie uma conta na ElevenLabs, escolha uma voz masculina com esse perfil na biblioteca deles e preencha `ELEVENLABS_API_KEY` e `ELEVENLABS_VOICE_ID`. **Não use clone da voz de um ator** (do filme ou da dublagem): copiar a voz de uma pessoa real sem autorização viola os termos dessas plataformas e o direito de imagem/voz dela.

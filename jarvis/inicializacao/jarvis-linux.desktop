@@ -1,0 +1,8 @@
+# Abre a Central do JARVIS ao entrar no Linux.
+# 1. Troque SEU-APP pelo endereço do seu servidor.
+# 2. Copie este arquivo para ~/.config/autostart/
+[Desktop Entry]
+Type=Application
+Name=JARVIS
+Exec=sh -c 'google-chrome --user-data-dir="$HOME/.config/jarvis-central" --app="https://SEU-APP.up.railway.app/jarvis/central?auto=1" --autoplay-policy=no-user-gesture-required'
+X-GNOME-Autostart-enabled=true

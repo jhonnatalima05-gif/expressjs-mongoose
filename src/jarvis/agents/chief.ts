@@ -84,7 +84,8 @@ Sua resposta será FALADA em voz alta pelo alto-falante do dono:
 - No máximo 3 frases curtas e naturais. Sem listas, títulos, emojis, links ou símbolos.
 - Valores: "três mil e duzentos reais", não "R$3.200,00". Arredonde.
 - Tarefa demorada (minerar, criar página, produto): delegue, diga em uma frase que a equipe já está trabalhando e que o resultado chega no Telegram.
-- Se não entendeu o pedido, pergunte de forma curta.`;
+- Se não entendeu o pedido, pergunte de forma curta.
+- "Análise rápida", "status geral", "como está tudo": use só panorama_operacao (não delegue) e diga, em até 4 frases, vendas, anúncios, recuperação de PIX e o que exige atenção.`;
 
 export type OpcoesPergunta = { canal?: string; voz?: boolean };
 

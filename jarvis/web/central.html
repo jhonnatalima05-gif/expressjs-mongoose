@@ -54,6 +54,8 @@
   .config div { background: var(--painel); border: 1px solid var(--linha); border-radius: 16px; padding: 20px;
     width: 100%; max-width: 420px; display: grid; gap: 12px; }
   .config input { background: var(--fundo); color: var(--texto); border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; }
+  .check { display: flex; gap: 8px; align-items: center; }
+  .nota { color: var(--suave); font-size: 12px; margin-top: -6px; }
   .link { background: none; border: 0; color: var(--suave); text-decoration: underline; cursor: pointer; padding: 0; }
 </style>
 </head>
@@ -89,6 +91,12 @@
       <strong>Configurar a central</strong>
       <label>Senha do JARVIS (JARVIS_API_TOKEN)<br><input id="token" type="password" autocomplete="off"></label>
       <label>Palavra de ativação<br><input id="palavra" value="jarvis"></label>
+      <label>Música de abertura (um arquivo seu: MP3, M4A…)<br><input id="musicaArquivo" type="file" accept="audio/*"></label>
+      <span class="nota" id="musicaNome">nenhuma música escolhida</span>
+      <label class="check"><input type="checkbox" id="musicaAoLigar"> Tocar ao ligar</label>
+      <label class="check"><input type="checkbox" id="musicaNaAnalise"> Tocar na análise rápida</label>
+      <label>Duração da música (segundos)<br><input id="musicaDuracao" type="number" min="5" max="300"></label>
+      <button class="link" id="testarMusica" type="button">testar música</button>
       <button class="btn" id="salvarConfig">Salvar</button>
     </div>
   </div>
@@ -161,6 +169,7 @@
     falando = true;
     pararEscuta();
     estado("falando");
+    await abaixarMusica();
     try {
       const resp = await api("/voz/falar", { texto });
       if (resp.status === 200) {
@@ -175,9 +184,96 @@
       await falarLocal(texto);
     }
     falando = false;
+    voltarMusica();
     estado(ocupado ? "pensando" : modo === "ouvindo" ? "ouvindo" : "dormindo");
     iniciarEscuta();
   }
+
+  // ---------------------------------------------------------------- música de abertura
+  // O arquivo é escolhido pelo dono e fica guardado só neste aparelho (IndexedDB).
+  const musica = new Audio();
+  musica.preload = "auto";
+  let musicaUrl = null, fimMusica = null, rampaTimer = null, musicaInicio = 0;
+  const cfgMusica = () => ({
+    aoLigar: store.get("jarvis_musica_ligar", "1") === "1",
+    naAnalise: store.get("jarvis_musica_analise", "1") === "1",
+    duracao: Math.min(300, Math.max(5, Number(store.get("jarvis_musica_duracao", "30")) || 30)),
+  });
+
+  function bancoLocal() {
+    return new Promise((ok, erro) => {
+      const req = indexedDB.open("jarvis", 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("arquivos");
+      req.onsuccess = () => ok(req.result);
+      req.onerror = () => erro(req.error);
+    });
+  }
+  async function guardarMusica(arquivo) {
+    const db = await bancoLocal();
+    await new Promise((ok, erro) => {
+      const tx = db.transaction("arquivos", "readwrite");
+      tx.objectStore("arquivos").put(arquivo, "musica");
+      tx.oncomplete = ok; tx.onerror = () => erro(tx.error);
+    });
+  }
+  async function lerMusica() {
+    try {
+      const db = await bancoLocal();
+      return await new Promise((ok) => {
+        const req = db.transaction("arquivos").objectStore("arquivos").get("musica");
+        req.onsuccess = () => ok(req.result || null); req.onerror = () => ok(null);
+      });
+    } catch { return null; }
+  }
+  async function carregarMusica() {
+    const arquivo = await lerMusica();
+    if (musicaUrl) URL.revokeObjectURL(musicaUrl);
+    musicaUrl = arquivo ? URL.createObjectURL(arquivo) : null;
+    if (musicaUrl) musica.src = musicaUrl;
+    $("musicaNome").textContent = arquivo ? `🎵 ${arquivo.name}` : "nenhuma música escolhida";
+  }
+
+  function rampa(alvo, ms) {
+    return new Promise((ok) => {
+      clearInterval(rampaTimer);
+      const inicio = musica.volume, passos = Math.max(1, Math.round(ms / 50));
+      let i = 0;
+      rampaTimer = setInterval(() => {
+        i++;
+        musica.volume = Math.min(1, Math.max(0, inicio + (alvo - inicio) * (i / passos)));
+        if (i >= passos) { clearInterval(rampaTimer); ok(); }
+      }, 50);
+    });
+  }
+  const tocandoMusica = () => Boolean(musicaUrl) && !musica.paused;
+  async function tocarMusica() {
+    if (!musicaUrl) return false;
+    clearTimeout(fimMusica);
+    musica.currentTime = 0;
+    musica.volume = 0;
+    try { await musica.play(); } catch { return false; } // navegador bloqueou o som sem toque
+    musicaInicio = Date.now();
+    rampa(0.9, 1500);
+    fimMusica = setTimeout(pararMusica, cfgMusica().duracao * 1000);
+    return true;
+  }
+  async function pararMusica() {
+    clearTimeout(fimMusica);
+    if (musica.paused) return;
+    await rampa(0, 2500);
+    musica.pause();
+  }
+  // Enquanto o JARVIS fala, a música abaixa (e volta depois).
+  const abaixarMusica = () => (tocandoMusica() ? rampa(0.12, 500) : Promise.resolve());
+  const voltarMusica = () => { if (tocandoMusica()) rampa(0.9, 900); };
+  // Deixa a música "abrir" alguns segundos antes de ele começar a falar.
+  async function esperarAbertura(segundos = 6) {
+    if (!tocandoMusica()) return;
+    const falta = musicaInicio + segundos * 1000 - Date.now();
+    if (falta > 0) await new Promise((r) => setTimeout(r, falta));
+  }
+
+  const ANALISE_RAPIDA = /an[aá]lise r[aá]pida|status geral|resumo r[aá]pido|vis[aã]o geral|como (est[aá]|t[aá]) tudo|relat[oó]rio r[aá]pido/i;
 
   // ---------------------------------------------------------------- comandos
   let ocupado = false;
@@ -189,7 +285,8 @@
     registrar("dono", comando);
     estado("pensando");
     let respondeu = false;
-    const t1 = setTimeout(() => !respondeu && falar("Um momento, Senhor."), 2500);
+    const comMusica = ANALISE_RAPIDA.test(comando) && cfgMusica().naAnalise && (await tocarMusica());
+    const t1 = setTimeout(() => !respondeu && !comMusica && falar("Um momento, Senhor."), 2500);
     const t2 = setTimeout(() => !respondeu && falar("Ainda estou cuidando disso, Senhor."), 30000);
     try {
       const resp = await api("/voz/comando", { texto: comando });
@@ -198,7 +295,9 @@
       const texto = json.resposta || json.error || "Não consegui concluir, Senhor.";
       registrar("jarvis", texto);
       while (falando) await new Promise((r) => setTimeout(r, 200));
+      if (comMusica) await esperarAbertura();
       await falar(texto);
+      if (comMusica) pararMusica();
     } catch (err) {
       respondeu = true;
       registrar("jarvis", "Falha de comunicação: " + err.message);
@@ -323,25 +422,42 @@
     estado("dormindo");
     await manterTelaLigada();
     iniciarEscuta();
+    if (cfgMusica().aoLigar && (await tocarMusica())) await esperarAbertura();
     falar("Online e à disposição, Senhor.");
   }
 
   // ---------------------------------------------------------------- configurações
   function abrirConfig() {
     $("token").value = token; $("palavra").value = palavra;
+    const m = cfgMusica();
+    $("musicaAoLigar").checked = m.aoLigar; $("musicaNaAnalise").checked = m.naAnalise; $("musicaDuracao").value = m.duracao;
     $("config").classList.add("aberta");
   }
   $("salvarConfig").onclick = () => {
     token = $("token").value.trim(); palavra = $("palavra").value.trim() || "jarvis";
     store.set("jarvis_token", token); store.set("jarvis_palavra", palavra);
+    store.set("jarvis_musica_ligar", $("musicaAoLigar").checked ? "1" : "0");
+    store.set("jarvis_musica_analise", $("musicaNaAnalise").checked ? "1" : "0");
+    store.set("jarvis_musica_duracao", String($("musicaDuracao").value || 30));
     $("config").classList.remove("aberta");
   };
+  $("musicaArquivo").onchange = async () => {
+    const arquivo = $("musicaArquivo").files[0];
+    if (!arquivo) return;
+    try { await guardarMusica(arquivo); await carregarMusica(); }
+    catch { $("musicaNome").textContent = "não consegui guardar a música neste navegador"; }
+  };
+  $("testarMusica").onclick = async () => (tocandoMusica() ? pararMusica() : tocarMusica());
   $("abrirConfig").onclick = abrirConfig;
   $("ativar").onclick = ativar;
   $("digitar").onsubmit = (e) => { e.preventDefault(); const t = $("entrada").value; $("entrada").value = ""; executar(t); };
 
   setInterval(verificarNovidades, 30000);
-  if (!token) abrirConfig();
+  carregarMusica().then(() => {
+    if (!token) abrirConfig();
+    // ?auto=1: liga sozinho (usado pelo atalho que abre a central quando o computador liga).
+    else if (new URLSearchParams(location.search).get("auto") === "1") ativar();
+  });
 })();
 </script>
 </body>
