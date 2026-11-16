@@ -11,6 +11,8 @@ import { notificarDono } from "../integrations/telegram";
 import * as meta from "../integrations/meta-ads";
 import { panorama, resumoAnuncios, resumoSuporte, resumoVendas } from "./operation";
 import { solicitarAcao } from "./actions";
+import { pesquisarBiblioteca } from "../integrations/ad-library";
+import { oportunidades } from "../seasonality";
 
 const json = (v: unknown) => JSON.stringify(v, null, 2);
 
@@ -199,20 +201,82 @@ export function ferramentasSuporte(agente: string) {
 
 export function ferramentasOfertas() {
   return {
+    calendario: betaZodTool({
+      name: "calendario_oportunidades",
+      description:
+        "Janelas sazonais do mercado brasileiro a partir de hoje: as ATIVAS, as que é preciso PREPARAR AGORA (dentro da antecedência) e as futuras, com nichos, ângulos e o custo de anúncio da época.",
+      inputSchema: z.object({ horizonte_dias: z.number().min(30).max(365).optional() }),
+      run: async ({ horizonte_dias }) => json({ hoje: new Date().toISOString().slice(0, 10), janelas: oportunidades(new Date(), horizonte_dias || 150) }),
+    }),
+
+    biblioteca: betaZodTool({
+      name: "biblioteca_anuncios",
+      description:
+        "Pesquisa a Biblioteca de Anúncios da Meta por palavra-chave e devolve as ofertas agrupadas (anunciante + domínio da página) com sinais de escala calculados: anúncios ativos, dias no ar, criativos novos em 7 dias, variações de copy, nota de escala 0-10 e estágio (escalada/validando/teste). Faça várias buscas com termos diferentes do nicho (promessa, dor, mecanismo, público).",
+      inputSchema: z.object({
+        termo: z.string().describe("Palavra-chave como o anunciante escreveria: ex. 'ovos de páscoa renda extra', 'curso de confeitaria'."),
+        pais: z.string().length(2).optional().describe("Código do país, padrão BR."),
+        limite: z.number().min(20).max(500).optional(),
+      }),
+      run: async ({ termo, pais, limite }) => {
+        try {
+          return json(await pesquisarBiblioteca(termo, (pais || "BR").toUpperCase(), limite || 200));
+        } catch (err: any) {
+          return `Falha ao consultar a Biblioteca: ${err?.message || err}`;
+        }
+      },
+    }),
+
+    jaMineradas: betaZodTool({
+      name: "ofertas_ja_mineradas",
+      description: "Ofertas já salvas antes (para não repetir e para ver se uma oferta continua no ar).",
+      inputSchema: z.object({ nicho: z.string().optional() }),
+      run: async ({ nicho }) => {
+        const filtro = nicho ? { nicho: new RegExp(nicho.replace(/[.*+?^${}()|[\]\\]/g, ""), "i") } : {};
+        const itens = await OfferModel.find(filtro).sort({ createdAt: -1 }).limit(40).lean();
+        return json(itens.map((o: any) => ({ nome: o.nome, nicho: o.nicho, anunciante: o.anunciante, nota: o.nota, estagio: o.estagio, janela: o.janelaSazonal, em: o.createdAt })));
+      },
+    }),
+
     salvar: betaZodTool({
       name: "salvar_oferta",
-      description: "Salva uma oferta minerada com evidências de que está escalada e uma nota de 0 a 10.",
+      description:
+        "Salva uma oferta minerada: evidências da Biblioteca, encaixe sazonal e a MODELAGEM (a versão própria do dono, original).",
       inputSchema: z.object({
         nicho: z.string(),
-        nome: z.string(),
+        nome: z.string().describe("Nome descritivo da oferta observada."),
+        anunciante: z.string(),
         promessa: z.string(),
-        evidencias: z.string().describe("Sinais de escala: tempo de anúncio ativo, nº de criativos, páginas, preço, garantias."),
+        evidencias: z.string().describe("Sinais de escala com números da Biblioteca."),
         links: z.array(z.string()),
-        nota: z.number().min(0).max(10),
+        score_escala: z.number().min(0).max(10).describe("O score calculado pela Biblioteca."),
+        estagio: z.enum(["escalada", "validando", "teste"]),
+        anuncios_ativos: z.number(),
+        dias_ativo_max: z.number(),
+        janela_sazonal: z.string().describe("id da janela do calendário, ou 'perene'."),
+        melhor_epoca: z.string().describe("Quando lançar/escalar e quando a oferta perde força."),
+        nota: z.number().min(0).max(10).describe("Nota final: escala x momento do ano x concorrência x encaixe com o dono."),
+        modelagem: z.string().describe("A oferta própria modelada: avatar, promessa, mecanismo, entregáveis, preço, bônus, garantia, 3 ângulos de criativo. Original."),
         proximo_passo: z.string(),
       }),
       run: async (o) => {
-        const doc = await OfferModel.create({ ...o, proximoPasso: o.proximo_passo });
+        const doc = await OfferModel.create({
+          nicho: o.nicho,
+          nome: o.nome,
+          anunciante: o.anunciante,
+          promessa: o.promessa,
+          evidencias: o.evidencias,
+          links: o.links,
+          scoreEscala: o.score_escala,
+          estagio: o.estagio,
+          anunciosAtivos: o.anuncios_ativos,
+          diasAtivoMax: o.dias_ativo_max,
+          janelaSazonal: o.janela_sazonal,
+          melhorEpoca: o.melhor_epoca,
+          nota: o.nota,
+          modelagem: o.modelagem,
+          proximoPasso: o.proximo_passo,
+        });
         return `Oferta salva (${doc.id}).`;
       },
     }),

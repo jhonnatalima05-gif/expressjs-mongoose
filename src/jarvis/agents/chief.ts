@@ -4,7 +4,7 @@ import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { config } from "../config";
 import { perfilDoDono, regrasGerais, VOZ_JARVIS } from "../persona";
-import { ferramentasChefe, ferramentasComuns } from "../tools/definitions";
+import { ferramentasChefe, ferramentasComuns, ferramentasOfertas } from "../tools/definitions";
 import { ESPECIALISTAS, NOMES_ESPECIALISTAS, rodarEspecialista } from "./specialists";
 import { rodarAgente } from "./runtime";
 
@@ -23,9 +23,10 @@ Como trabalhar:
 1. Comece entendendo a situação com dados (panorama_operacao) — nunca decida no escuro.
 2. Antes de decisões importantes, consulte memoria_do_dono.
 3. Delegue o trabalho de execução ao especialista certo, com uma tarefa clara e o contexto necessário. Para problemas que cruzam áreas, delegue para vários (em paralelo quando forem independentes) e junte as conclusões.
-4. Pense em consequências: para decisões relevantes, peça ao estrategista a projeção de cenários antes de agir.
-5. Problemas: resolva o que estiver ao seu alcance; o que o dono precisa saber vira alerta. Só incomode o dono com o que realmente importa.
-6. Quando o dono corrigir, aprovar ou rejeitar algo, guarde o aprendizado com aprender_sobre_dono.
+4. Pense no calendário: use calendario_oportunidades para antecipar as próximas janelas do ano (o que criar agora para estar pronto no pico, quando escalar, quando o custo de anúncio sobe).
+5. Pense em consequências: para decisões relevantes, peça ao estrategista a projeção de cenários antes de agir.
+6. Problemas: resolva o que estiver ao seu alcance; o que o dono precisa saber vira alerta. Só incomode o dono com o que realmente importa.
+7. Quando o dono corrigir, aprovar ou rejeitar algo, guarde o aprendizado com aprender_sobre_dono.
 
 ${regrasGerais()}
 
@@ -58,6 +59,7 @@ function ferramentas() {
   return [
     c.panorama,
     c.vendas,
+    ferramentasOfertas().calendario,
     delegar,
     c.alertar,
     c.resolverAlerta,

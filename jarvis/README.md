@@ -35,6 +35,8 @@ Fale com ele como numa conversa: *"Jarvis, como foram as vendas hoje?"*, *"pausa
 |---|---|
 | `/panorama` | Como está a operação agora |
 | `/relatorio` | Relatório completo na hora |
+| `/oportunidades` | Calendário: o que está em alta e o que preparar |
+| `/minerar [nicho]` | Minerar ofertas na Biblioteca agora |
 | `/alertas` | Problemas em aberto |
 | `/aprovacoes` | Pedidos com botões ✅ Aprovar / ❌ Rejeitar |
 | `/autonomia total` | Ele decide e executa sozinho (dentro dos limites) |
@@ -52,6 +54,19 @@ Depois de aprovar ou rejeitar, responda *"porque ..."* e ele guarda o motivo par
 5. Preencha `jarvis/perfil-do-dono.md` e faça um novo deploy.
 
 Rode **uma única instância** do servidor: duas cópias ao mesmo tempo disputariam as mensagens do Telegram. Para testar no seu PC, pare a da nuvem antes.
+
+## Mineração de ofertas por época do ano
+
+O minerador trabalha em 4 passos:
+
+1. **Calendário** (`jarvis/calendario-sazonal.json`): o que está **no ar agora** (🟢), o que é preciso **preparar agora** para chegar pronto no pico (🟡) e o que vem depois (⚪). Cada janela traz os nichos, os ângulos e o custo de anúncio da época (ex.: janeiro barato para escalar, Black Friday cara para testar).
+2. **Biblioteca de Anúncios:** busca os nichos priorizados e mede, com números, quem está escalando: dias no ar, anúncios ativos, criativos novos na semana e variações de copy. Isso vira uma **nota de escala de 0 a 10** calculada por fórmula (não é "achismo" da IA): *escalada* (≥7), *validando* (4–6,9), *teste* (<4).
+3. **Cruzamento:** escala comprovada × momento do ano × concorrência × o seu perfil. Uma oferta validando cuja época abre em 30 dias pode valer mais do que uma escalada cuja época está acabando.
+4. **Modelagem:** para as melhores, ele monta a **sua versão** da oferta (avatar, promessa com outro ângulo, mecanismo, entregáveis, preço, bônus, garantia, 3 ângulos de criativo) com cronograma: pronta até X, testar de X a Y, escalar no pico. Ele usa o que funciona como inspiração, nunca copia texto, marca ou criativo de ninguém.
+
+Roda sozinho **toda segunda às 7h** e manda as 3 melhores oportunidades no Telegram. Na hora: `/minerar` ou `/minerar confeitaria`. Para ver o calendário: `/oportunidades`.
+
+**Fonte dos anúncios (importante):** a API oficial da Biblioteca da Meta **não entrega anúncios comerciais veiculados no Brasil**, só políticos (os comerciais ela só entrega da Europa). Por isso a fonte principal para o Brasil é o **Apify**, um serviço pago por uso que lê a Biblioteca pública: crie uma conta, pegue o token e coloque em `APIFY_TOKEN`. Sem ele, o minerador avisa e usa a pesquisa na web como fonte mais fraca.
 
 ## Recuperação de PIX e vendas no WhatsApp
 

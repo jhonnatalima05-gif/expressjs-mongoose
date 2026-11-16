@@ -9,13 +9,16 @@ import { decidirAprovacao } from "./tools/actions";
 import { panorama } from "./tools/operation";
 import { AlertModel, ApprovalModel, OwnerMemoryModel } from "./models";
 import { definirAutonomia, definirPausa } from "./settings";
-import { gerarRelatorioDiario } from "./scheduler";
+import { gerarRelatorioDiario, rodarMineracao } from "./scheduler";
+import { oportunidades } from "./seasonality";
 
 const AJUDA = `À disposição, Senhor. Pode falar comigo normalmente — ordens, perguntas, "o que acontece se...".
 
 Atalhos:
 /panorama — como está a operação agora
 /relatorio — gerar o relatório completo agora
+/oportunidades — janelas do ano: o que está em alta e o que preparar
+/minerar [nicho] — minerar ofertas na Biblioteca de Anúncios agora
 /alertas — problemas em aberto
 /aprovacoes — o que espera o seu sim
 /autonomia total | supervisionada — quanto eu decido sozinho
@@ -73,6 +76,20 @@ async function tratarTexto(texto: string) {
       await enviarMensagem(chat, "Preparando o relatório, Senhor. Leva alguns minutos.");
       await gerarRelatorioDiario(); // já envia pelo Telegram
       return;
+    case "/oportunidades": {
+      const js = oportunidades(new Date(), 120);
+      const icone = { ativa: "🟢", preparar_agora: "🟡", futura: "⚪" } as const;
+      const linhas = js.map((j) => {
+        const quando = j.situacao === "ativa" ? `no ar até ${j.terminaEm}` : j.situacao === "preparar_agora" ? `começa ${j.comecaEm}, oferta pronta até ${j.ofertaProntaAte}` : `começa ${j.comecaEm}`;
+        return `${icone[j.situacao]} ${j.nome}: ${quando}\n   ${j.nichos.slice(0, 3).join(", ")}${j.custoAnuncio ? `\n   💰 ${j.custoAnuncio}` : ""}`;
+      });
+      return enviarMensagem(chat, linhas.length ? `📅 Oportunidades\n\n${linhas.join("\n")}` : "Calendário vazio, Senhor.");
+    }
+    case "/minerar": {
+      await enviarMensagem(chat, "Indo à Biblioteca de Anúncios, Senhor. Isso leva alguns minutos; mando o resultado aqui.");
+      await rodarMineracao(args.join(" ") || undefined); // já envia pelo Telegram
+      return;
+    }
     case "/alertas": {
       const alertas = await AlertModel.find({ resolvido: false }).sort({ createdAt: -1 }).limit(20).lean();
       return enviarMensagem(
@@ -159,6 +176,8 @@ export async function iniciarBotTelegram() {
     commands: [
       { command: "panorama", description: "Como está a operação agora" },
       { command: "relatorio", description: "Relatório completo agora" },
+      { command: "oportunidades", description: "Janelas do ano e o que preparar" },
+      { command: "minerar", description: "Minerar ofertas agora (opcional: nicho)" },
       { command: "alertas", description: "Problemas em aberto" },
       { command: "aprovacoes", description: "O que espera o seu sim" },
       { command: "autonomia", description: "total ou supervisionada" },

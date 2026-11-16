@@ -6,7 +6,8 @@ import { NOMES_ESPECIALISTAS, NomeEspecialista, rodarEspecialista } from "./agen
 import { AlertModel, ConversationModel, ApprovalModel, DecisionModel, OfferModel, OwnerMemoryModel, ReportModel, TicketModel } from "./models";
 import { decidirAprovacao } from "./tools/actions";
 import { panorama } from "./tools/operation";
-import { gerarRelatorioDiario } from "./scheduler";
+import { gerarRelatorioDiario, rodarMineracao } from "./scheduler";
+import { oportunidades } from "./seasonality";
 import { assinaturaValida, extrairMensagens } from "./integrations/whatsapp";
 import { receberMensagemWhatsApp } from "./recovery";
 
@@ -109,6 +110,9 @@ routes.post("/tickets", assincrono(async (req, res) => {
   if (!mensagem) return res.status(400).json({ error: "Envie ao menos { mensagem, clienteEmail }" });
   res.status(201).json(await TicketModel.create({ clienteEmail, clienteNome, assunto, mensagem, canal }));
 }));
+
+routes.get("/oportunidades", (_req, res) => res.json(oportunidades(new Date(), 365)));
+routes.post("/minerar", assincrono(async (req, res) => res.json({ resultado: await rodarMineracao(req.body?.foco) })));
 
 // Conversas de recuperação/vendas (?status=em_conversa etc.).
 routes.get("/recuperacao", assincrono(async (req, res) => {

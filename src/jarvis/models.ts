@@ -82,7 +82,15 @@ const OfferSchema = new Schema(
     promessa: String,
     evidencias: String, // anúncios ativos, tempo rodando, criativos, etc.
     links: [String],
-    nota: Number, // 0-10
+    nota: Number, // 0-10 (nota final do minerador)
+    scoreEscala: Number, // 0-10 calculado pelos dados da Biblioteca
+    estagio: String, // escalada | validando | teste
+    anunciante: String,
+    anunciosAtivos: Number,
+    diasAtivoMax: Number,
+    janelaSazonal: String, // id da janela do calendário (ou "perene")
+    melhorEpoca: String,
+    modelagem: String, // a SUA versão da oferta (original, não cópia)
     proximoPasso: String,
   },
   { timestamps: true }
