@@ -2,6 +2,10 @@ import "./lib/db";
 import express from "express";
 import crypto from "crypto";
 import countryRoutes from "./routes/country";
+import jarvisRoutes from "./jarvis/routes";
+import { SaleModel } from "./jarvis/models";
+import { alertar } from "./jarvis/alerts";
+import { iniciarAgendador } from "./jarvis/scheduler";
 
 const app = express();
 const port = process.env.PORT || 3333;
@@ -23,6 +27,7 @@ app.get("/", async (req, res) => {
 });
 
 app.use("/countries", countryRoutes);
+app.use("/jarvis", jarvisRoutes);
 
 app.post("/webhook", async (req, res) => {
   try {
@@ -46,7 +51,27 @@ app.post("/webhook", async (req, res) => {
     const approvedStatuses = ["authorized", "approved", "paid", "completed", "finished", "realized", "venda_realizada"];
     const normalizedStatus = String(status).toLowerCase();
 
-    if (!approvedStatuses.includes(normalizedStatus)) {
+    const aprovada = approvedStatuses.includes(normalizedStatus);
+
+    // Registra toda transação para o JARVIS acompanhar vendas, recusas e quedas.
+    // Falha aqui não pode derrubar o envio para a Meta.
+    try {
+      const valorBruto = Number(String(amountRaw).replace(",", ".")) || 0;
+      await SaleModel.create({
+        status,
+        aprovada,
+        valor: valorBruto > 999 ? valorBruto / 100 : valorBruto,
+        metodo: paymentMethod,
+        produto: body.product?.name || body.item?.product_name || order.product_name || body.offer?.name,
+        clienteEmail: customer.email,
+        clienteNome: customer.name,
+        raw: body,
+      });
+    } catch (err) {
+      console.error("❌ JARVIS não conseguiu registrar a venda:", err);
+    }
+
+    if (!aprovada) {
       return res.status(200).json({
         ok: true,
         skipped: true,
@@ -104,6 +129,13 @@ user_data: {
     console.log("📤 RESPOSTA META:", JSON.stringify(metaJson));
 
     if (!metaResp.ok) {
+      await alertar({
+        chave: "meta-capi-erro",
+        nivel: "critico",
+        area: "rastreamento",
+        titulo: "Evento de compra NÃO chegou na Meta (CAPI)",
+        detalhe: JSON.stringify(metaJson).slice(0, 500),
+      }).catch(() => undefined);
       return res.status(500).json({
         ok: false,
         meta_error: metaJson,
@@ -126,4 +158,5 @@ user_data: {
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
+  iniciarAgendador();
 });
