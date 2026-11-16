@@ -1,0 +1,47 @@
+{
+  "_instrucoes": "Troque os exemplos pelas suas ofertas reais. O agente SÓ envia links que estão aqui. 'quandoUsar' diz a ele em que momento da conversa cada link é o certo. Respostas de objeções devem ser verdadeiras.",
+  "atendente": {
+    "nome": "Ana",
+    "empresa": "Equipe Método Exemplo",
+    "assinatura": "Ana, do suporte"
+  },
+  "ofertas": [
+    {
+      "id": "metodo-exemplo-pix",
+      "produto": "Método Exemplo",
+      "nomesNaPlataforma": ["Método Exemplo", "Metodo Exemplo - Oferta Principal"],
+      "tipo": "principal",
+      "preco": 97,
+      "link": "https://pay.suaplataforma.com/checkout-principal",
+      "quandoUsar": "Link padrão. Use quando o PIX expirou ou o cliente quer gerar um novo pagamento.",
+      "descricao": "Curso online com 6 módulos sobre ...",
+      "paraQuem": "Pessoas que ...",
+      "garantia": "7 dias incondicional: se não gostar, devolvemos 100%.",
+      "objecoes": {
+        "achei caro": "Explique o valor por dia de acesso e a garantia de 7 dias. Se persistir, ofereça o parcelado no cartão.",
+        "será que funciona pra mim": "Pergunte a situação dele e mostre qual módulo resolve. Lembre da garantia, sem prometer resultado.",
+        "não sei se é confiável": "Mostre a garantia de 7 dias e que o pagamento é processado pela plataforma, com nota e suporte."
+      },
+      "faq": {
+        "como recebo o acesso": "Na hora, no e-mail usado na compra (confira spam/promoções).",
+        "por quanto tempo tenho acesso": "1 ano de acesso."
+      }
+    },
+    {
+      "id": "metodo-exemplo-cartao",
+      "produto": "Método Exemplo",
+      "tipo": "cartao_parcelado",
+      "preco": 97,
+      "link": "https://pay.suaplataforma.com/checkout-cartao",
+      "quandoUsar": "Cliente sem saldo para o PIX agora, ou prefere parcelar no cartão."
+    },
+    {
+      "id": "metodo-exemplo-essencial",
+      "produto": "Método Exemplo",
+      "tipo": "downsell",
+      "preco": 47,
+      "link": "https://pay.suaplataforma.com/checkout-essencial",
+      "quandoUsar": "Só depois de o cliente recusar o principal por preço, mesmo com o parcelamento. Versão menor: módulos 1 a 3, sem bônus."
+    }
+  ]
+}

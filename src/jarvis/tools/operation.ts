@@ -4,6 +4,7 @@ import { config } from "../config";
 import {
   AlertModel,
   ApprovalModel,
+  ConversationModel,
   DecisionModel,
   OfferModel,
   SaleModel,
@@ -73,8 +74,32 @@ export async function resumoSuporte() {
   };
 }
 
+export async function resumoRecuperacao(horas: number) {
+  const desde = new Date(Date.now() - horas * 3600_000);
+  const convs = await ConversationModel.find({ createdAt: { $gte: desde } }, { mensagens: 0 }).lean();
+  const por = (s: string) => convs.filter((c: any) => c.status === s).length;
+  const pix = convs.filter((c: any) => c.origem === "pix_pendente");
+  const contatados = pix.filter((c: any) => c.tentativas > 0 || c.status === "em_conversa");
+  const recuperados = pix.filter((c: any) => c.status === "convertido" && (c.valorRecuperado || 0) > 0);
+  return {
+    periodoHoras: horas,
+    pixGerados: pix.length,
+    pagaramSozinhos: pix.filter((c: any) => c.status === "convertido" && !c.valorRecuperado).length,
+    contatados: contatados.length,
+    emConversa: por("em_conversa"),
+    recuperados: recuperados.length,
+    valorRecuperado: recuperados.reduce((s: number, c: any) => s + (c.valorRecuperado || 0), 0),
+    taxaRecuperacao: contatados.length ? recuperados.length / contatados.length : null,
+    perdidos: por("perdido"),
+    pediramParaParar: por("nao_contatar"),
+    comHumano: por("humano"),
+    clientesQueChamaram: convs.filter((c: any) => c.origem === "cliente_iniciou").length,
+  };
+}
+
 export async function panorama() {
-  const [vendas24h, vendas7d, anuncios, suporte, alertas, aprovacoes, decisoes, ofertas] = await Promise.all([
+  const [recuperacao24h, vendas24h, vendas7d, anuncios, suporte, alertas, aprovacoes, decisoes, ofertas] = await Promise.all([
+    resumoRecuperacao(24),
     resumoVendas(24),
     resumoVendas(24 * 7),
     resumoAnuncios("today"),
@@ -92,6 +117,7 @@ export async function panorama() {
     vendas7d,
     anuncios,
     suporte: { abertos: suporte.abertos },
+    recuperacao24h,
     alertasAbertos: alertas.map((a: any) => ({ id: String(a._id), nivel: a.nivel, area: a.area, titulo: a.titulo, detalhe: a.detalhe })),
     aprovacoesPendentes: aprovacoes.map((a: any) => ({ id: String(a._id), tipo: a.tipo, descricao: a.descricao })),
     ultimasDecisoes: decisoes.map((d: any) => ({ agente: d.agente, decisao: d.decisao, motivo: d.motivo, executada: d.executada, em: d.createdAt })),

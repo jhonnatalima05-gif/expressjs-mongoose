@@ -7,11 +7,14 @@ import { SaleModel } from "./jarvis/models";
 import { alertar } from "./jarvis/alerts";
 import { iniciarAgendador } from "./jarvis/scheduler";
 import { iniciarBotTelegram } from "./jarvis/telegram-bot";
+import { normalizarTelefone } from "./jarvis/integrations/whatsapp";
+import { classificarTransacao, extrairPix, registrarPagamento, registrarPixPendente } from "./jarvis/recovery";
 
 const app = express();
 const port = process.env.PORT || 3333;
 
-app.use(express.json());
+// Guarda o corpo bruto para validar a assinatura do webhook do WhatsApp.
+app.use(express.json({ verify: (req, _res, buf) => ((req as any).rawBody = buf) }));
 app.use(express.raw({ type: "application/vnd.custom-type" }));
 app.use(express.text({ type: "text/html" }));
 
@@ -53,21 +56,33 @@ app.post("/webhook", async (req, res) => {
     const normalizedStatus = String(status).toLowerCase();
 
     const aprovada = approvedStatuses.includes(normalizedStatus);
+    const telefoneCliente = customer.phone || customer.cellphone || customer.mobile || body.phone;
+    const produtoNome = body.product?.name || body.item?.product_name || order.product_name || body.offer?.name;
+    const valorBrutoNum = Number(String(amountRaw).replace(",", ".")) || 0;
+    const valorReais = valorBrutoNum > 999 ? valorBrutoNum / 100 : valorBrutoNum;
 
     // Registra toda transação para o JARVIS acompanhar vendas, recusas e quedas.
     // Falha aqui não pode derrubar o envio para a Meta.
     try {
-      const valorBruto = Number(String(amountRaw).replace(",", ".")) || 0;
       await SaleModel.create({
         status,
         aprovada,
-        valor: valorBruto > 999 ? valorBruto / 100 : valorBruto,
+        valor: valorReais,
         metodo: paymentMethod,
-        produto: body.product?.name || body.item?.product_name || order.product_name || body.offer?.name,
-        clienteEmail: customer.email,
+        produto: produtoNome,
+        clienteEmail: customer.email ? String(customer.email).toLowerCase().trim() : undefined,
         clienteNome: customer.name,
+        clienteTelefone: normalizarTelefone(telefoneCliente) || undefined,
         raw: body,
       });
+
+      // Recuperação de PIX: gerou e não pagou → agenda contato; pagou → encerra a recuperação.
+      const tipo = classificarTransacao(normalizedStatus, String(paymentMethod));
+      const cliente = { email: customer.email, telefone: telefoneCliente, valor: valorReais };
+      if (tipo === "aprovada") await registrarPagamento(cliente);
+      if (tipo === "pix_pendente") {
+        await registrarPixPendente({ ...cliente, nome: customer.name, produto: produtoNome, ...extrairPix(body) });
+      }
     } catch (err) {
       console.error("❌ JARVIS não conseguiu registrar a venda:", err);
     }

@@ -53,6 +53,32 @@ Depois de aprovar ou rejeitar, responda *"porque ..."* e ele guarda o motivo par
 
 Rode **uma única instância** do servidor: duas cópias ao mesmo tempo disputariam as mensagens do Telegram. Para testar no seu PC, pare a da nuvem antes.
 
+## Recuperação de PIX e vendas no WhatsApp
+
+Quando alguém gera um PIX e não paga, o JARVIS entra em ação sozinho:
+
+1. **Detecta** pelo webhook da plataforma (status "aguardando pagamento" com método PIX) e guarda nome, telefone, produto, valor e o código copia-e-cola.
+2. **Espera** 15 min (o cliente pode pagar sozinho). Pagou → nada acontece.
+3. **Primeiro contato** no WhatsApp com um template aprovado, ex.: *"Oi {{1}}! Vi que você gerou o PIX do {{2}} mas ele ainda não foi pago. Ficou alguma dúvida ou deu algum problema? Posso te ajudar por aqui 😊"*. Se não responder, um 2º contato em 4h. Só entre 8h e 21h.
+4. **Cliente respondeu** → a *closer* conduz a conversa como uma pessoa da equipe: entende o que travou, tira dúvidas, contorna objeções com a verdade e envia **o link certo do catálogo** conforme a conversa (PIX expirou → reenvia o PIX; sem saldo → link do cartão; achou caro mesmo assim → versão menor).
+5. **Pagou** → a conversa vira "convertida", ela agradece e os contatos param. O valor entra como *recuperado* no relatório.
+6. **Cliente pediu para parar** ("parar", "sair") → nunca mais recebe mensagem. Irritado, reclamação, ou pediu uma pessoa → ela passa para você e você recebe alerta no Telegram.
+
+Clientes que chamarem no WhatsApp por conta própria também são atendidos pela closer.
+
+**Regras que ela segue:** só envia links que estão em `jarvis/catalogo.json` (nunca inventa link, preço ou desconto), não usa escassez falsa, não promete resultado, e se perguntarem se é robô, ela não mente: diz que é a assistente virtual e oferece chamar alguém.
+
+### Configurando
+
+1. **Catálogo:** edite `jarvis/catalogo.json` com suas ofertas reais: link de cada checkout, quando usar cada um, respostas verdadeiras para as objeções e o nome da atendente.
+2. **WhatsApp Cloud API** (Meta for Developers → app → WhatsApp): pegue o token permanente e o *Phone number ID*. No número, crie e aprove os templates `recuperacao_pix_1` e `recuperacao_pix_2` (categoria *Utilidade* ou *Marketing*, com as variáveis {{1}} = nome e {{2}} = produto).
+3. Webhook da Meta: URL `https://SEU-APP.up.railway.app/jarvis/whatsapp/webhook`, token de verificação = `WHATSAPP_VERIFY_TOKEN`, assine o campo **messages**.
+4. Confira se a sua plataforma (Ticto/Cakto/Kiwify) manda o webhook também do **PIX gerado**, não só do aprovado. Se os nomes de status forem diferentes, ajuste `STATUS_AGUARDANDO` em `src/jarvis/recovery.ts`.
+
+Por que a API oficial e não uma "API de WhatsApp" não oficial: as não oficiais (que conectam pelo QR code) costumam ter o número **banido** quando mandam mensagens automáticas para quem não salvou o contato. A oficial exige templates no primeiro contato, mas não derruba o seu número.
+
+Acompanhe em `/panorama` no Telegram, no relatório diário, ou em `GET /jarvis/recuperacao`.
+
 ## O que cada um faz
 
 | Agente | Faz | Ferramentas |

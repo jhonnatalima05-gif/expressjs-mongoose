@@ -10,6 +10,7 @@ const SaleSchema = new Schema(
     produto: String,
     clienteEmail: String,
     clienteNome: String,
+    clienteTelefone: String,
     raw: Schema.Types.Mixed,
   },
   { timestamps: true }
@@ -106,3 +107,34 @@ const ReportSchema = new Schema(
   { timestamps: true }
 );
 export const ReportModel = model("JarvisReport", ReportSchema);
+
+// Conversa de recuperação/vendas com um cliente (PIX gerado e não pago, ou cliente que chamou no WhatsApp).
+const ConversationSchema = new Schema(
+  {
+    origem: { type: String, enum: ["pix_pendente", "cliente_iniciou"], default: "pix_pendente" },
+    canal: { type: String, enum: ["whatsapp", "email"], default: "whatsapp" },
+    telefone: { type: String, index: true },
+    email: { type: String, index: true },
+    nome: String,
+    produto: String,
+    valor: Number,
+    pixCodigo: String,
+    pixLink: String,
+    status: {
+      type: String,
+      enum: ["aguardando", "contatado", "em_conversa", "convertido", "perdido", "nao_contatar", "humano"],
+      default: "aguardando",
+      index: true,
+    },
+    tentativas: { type: Number, default: 0 },
+    followups: { type: Number, default: 0 },
+    proximoContatoEm: Date,
+    ultimaMensagemClienteEm: Date,
+    mensagens: [{ de: String, texto: String, em: { type: Date, default: Date.now } }],
+    ofertasEnviadas: [String],
+    valorRecuperado: Number,
+    notas: String,
+  },
+  { timestamps: true }
+);
+export const ConversationModel = model("JarvisConversation", ConversationSchema);

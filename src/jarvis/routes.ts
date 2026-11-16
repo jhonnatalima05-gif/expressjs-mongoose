@@ -3,10 +3,12 @@ import { Router, Request, Response, NextFunction } from "express";
 import { config } from "./config";
 import { perguntarAoJarvis } from "./agents/chief";
 import { NOMES_ESPECIALISTAS, NomeEspecialista, rodarEspecialista } from "./agents/specialists";
-import { AlertModel, ApprovalModel, DecisionModel, OfferModel, OwnerMemoryModel, ReportModel, TicketModel } from "./models";
+import { AlertModel, ConversationModel, ApprovalModel, DecisionModel, OfferModel, OwnerMemoryModel, ReportModel, TicketModel } from "./models";
 import { decidirAprovacao } from "./tools/actions";
 import { panorama } from "./tools/operation";
 import { gerarRelatorioDiario } from "./scheduler";
+import { assinaturaValida, extrairMensagens } from "./integrations/whatsapp";
+import { receberMensagemWhatsApp } from "./recovery";
 
 const routes = Router();
 
@@ -16,6 +18,21 @@ routes.get("/paginas/:arquivo", (req, res) => {
   res.sendFile(path.resolve(config.outputDir, "paginas", arquivo), (err) => {
     if (err) res.status(404).json({ error: "Página não encontrada" });
   });
+});
+
+// Webhook do WhatsApp Cloud API (público: a Meta chama direto; protegido pela assinatura).
+routes.get("/whatsapp/webhook", (req, res) => {
+  const ok = req.query["hub.mode"] === "subscribe" && req.query["hub.verify_token"] === process.env.WHATSAPP_VERIFY_TOKEN;
+  if (ok && process.env.WHATSAPP_VERIFY_TOKEN) return res.status(200).send(String(req.query["hub.challenge"]));
+  res.sendStatus(403);
+});
+
+routes.post("/whatsapp/webhook", (req, res) => {
+  if (!assinaturaValida((req as any).rawBody, req.header("x-hub-signature-256"))) return res.sendStatus(401);
+  res.sendStatus(200); // responde já; a Meta reenvia se demorar
+  for (const m of extrairMensagens(req.body)) {
+    receberMensagemWhatsApp(m).catch((err) => console.error("❌ Mensagem do WhatsApp:", err));
+  }
 });
 
 // Entrada de tickets (e-mail encaminhado, formulário, Zapier/Make, etc.).
@@ -91,6 +108,12 @@ routes.post("/tickets", assincrono(async (req, res) => {
   const { clienteEmail, clienteNome, assunto, mensagem, canal } = req.body || {};
   if (!mensagem) return res.status(400).json({ error: "Envie ao menos { mensagem, clienteEmail }" });
   res.status(201).json(await TicketModel.create({ clienteEmail, clienteNome, assunto, mensagem, canal }));
+}));
+
+// Conversas de recuperação/vendas (?status=em_conversa etc.).
+routes.get("/recuperacao", assincrono(async (req, res) => {
+  const filtro = req.query.status ? { status: String(req.query.status) } : {};
+  res.json(await ConversationModel.find(filtro).sort({ updatedAt: -1 }).limit(100));
 }));
 
 routes.get("/memoria", assincrono(async (_req, res) => res.json(await OwnerMemoryModel.find().sort({ createdAt: -1 }))));

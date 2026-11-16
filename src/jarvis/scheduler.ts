@@ -4,6 +4,7 @@ import { perguntarAoJarvis } from "./agents/chief";
 import { ReportModel } from "./models";
 import { notificarDono } from "./integrations/telegram";
 import { carregarConfiguracoes } from "./settings";
+import { cicloRecuperacao } from "./recovery";
 
 const PROMPT_RELATORIO = `Gere o relatório diário da operação para o dono.
 Use panorama_operacao e resumo_vendas, e peça ao gestor_trafego a análise de ontem vs últimos 7 dias e ao estrategista a projeção "se continuar assim" para 7 e 30 dias.
@@ -11,9 +12,10 @@ Formato (texto puro, cabe no celular):
 1. Resumo em 3 linhas (como está o dia/semana).
 2. Números: vendas, receita, gasto, ROAS, lucro estimado — com comparação.
 3. O que eu (JARVIS) e a equipe fizemos nas últimas 24h e por quê.
-4. Problemas e alertas (abertos e resolvidos).
-5. Aprovações que esperam o Senhor.
-6. Visão do alto: para onde a operação vai se nada mudar, e minhas 3 recomendações em ordem de prioridade.`;
+4. Recuperação de PIX: gerados, contatados, conversas, convertidos e valor recuperado (24h); o que mais trava os clientes.
+5. Problemas e alertas (abertos e resolvidos).
+6. Aprovações que esperam o Senhor.
+7. Visão do alto: para onde a operação vai se nada mudar, e minhas 3 recomendações em ordem de prioridade.`;
 
 export async function gerarRelatorioDiario(): Promise<string> {
   const texto = await perguntarAoJarvis(PROMPT_RELATORIO);
@@ -61,6 +63,7 @@ export async function iniciarAgendador() {
   const min = config.monitor.intervaloMin;
   setInterval(cicloDeMonitoramento, min * 60_000);
   setInterval(talvezRelatorio, 60_000);
+  setInterval(cicloRecuperacao, 60_000);
   setTimeout(cicloDeMonitoramento, 30_000);
   console.log(`🧠 JARVIS online — monitorando a cada ${min} min, relatório diário às ${config.relatorio.hora}h (${config.relatorio.timezone}), autonomia: ${config.autonomia}.`);
 }

@@ -37,6 +37,7 @@ async function textoPanorama() {
     `Autonomia: ${p.autonomia}${config.pausado ? " (PAUSADO)" : ""}`,
     `Vendas 24h: ${p.vendas24h.aprovadas} (${brl(p.vendas24h.receita)}) | 7d: ${p.vendas7d.aprovadas} (${brl(p.vendas7d.receita)})`,
     anuncios,
+    `Recuperação PIX 24h: ${p.recuperacao24h.pixGerados} gerados, ${p.recuperacao24h.contatados} contatados, ${p.recuperacao24h.recuperados} recuperados (${brl(p.recuperacao24h.valorRecuperado)}), ${p.recuperacao24h.emConversa} em conversa`,
     `Suporte: ${p.suporte.abertos} ticket(s) aberto(s)`,
     `Alertas abertos: ${p.alertasAbertos.length} | Aprovações pendentes: ${p.aprovacoesPendentes.length}`,
   ].join("\n");
