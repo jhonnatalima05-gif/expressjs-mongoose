@@ -1,5 +1,7 @@
 # JARVIS — agente-chefe da operação
 
+> **Primeira vez? Comece pelo [passo a passo](PASSO-A-PASSO.md).**
+
 O JARVIS é o "cabeça" da operação de infoprodutos. Ele vigia tudo, decide dentro dos limites que você define, comanda uma equipe de agentes especialistas e te manda o relatório diário — falando como um mordomo digital calmo e direto.
 
 ```
