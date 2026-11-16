@@ -19,6 +19,7 @@ async function precisaAprovacao(acao: Acao): Promise<string | null> {
   if (acao.tipo === "reembolso") {
     return acao.valor > config.limites.maxReembolsoAutomatico ? "reembolso acima do limite automático" : null;
   }
+  if (config.pausado) return "JARVIS pausado pelo dono";
   if (config.autonomia === "supervisionada") return "modo supervisionado";
   if (acao.tipo === "ajustar_orcamento") {
     if (acao.novoOrcamento > config.limites.maxOrcamentoDiario) {
@@ -81,10 +82,12 @@ export async function solicitarAcao(acao: Acao, agente: string): Promise<string>
     if (acao.tipo === "responder_ticket") {
       await TicketModel.findByIdAndUpdate(acao.ticketId, { status: "aguardando_aprovacao", resposta: acao.resposta });
     }
-    await notificarDono(
-      `🟡 Senhor, preciso da sua autorização (${bloqueio}).\n${descricao}\n` +
-        `Aprovar: POST /jarvis/aprovacoes/${aprovacao.id}/aprovar`
-    );
+    await notificarDono(`🟡 Senhor, preciso da sua autorização (${bloqueio}).\n\n${descricao}`, [
+      [
+        { texto: "✅ Aprovar", dados: `ap:${aprovacao.id}` },
+        { texto: "❌ Rejeitar", dados: `rj:${aprovacao.id}` },
+      ],
+    ]);
     return `Ação NÃO executada: aguardando aprovação do dono (${bloqueio}). ID da aprovação: ${aprovacao.id}`;
   }
 

@@ -3,7 +3,7 @@
 import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { config } from "../config";
-import { perfilDoDono, REGRAS_GERAIS, VOZ_JARVIS } from "../persona";
+import { perfilDoDono, regrasGerais, VOZ_JARVIS } from "../persona";
 import { ferramentasChefe, ferramentasComuns } from "../tools/definitions";
 import { ESPECIALISTAS, NOMES_ESPECIALISTAS, rodarEspecialista } from "./specialists";
 import { rodarAgente } from "./runtime";
@@ -27,7 +27,7 @@ Como trabalhar:
 5. Problemas: resolva o que estiver ao seu alcance; o que o dono precisa saber vira alerta. Só incomode o dono com o que realmente importa.
 6. Quando o dono corrigir, aprovar ou rejeitar algo, guarde o aprendizado com aprender_sobre_dono.
 
-${REGRAS_GERAIS}
+${regrasGerais()}
 
 ## Perfil do dono (escrito por ele)
 ${perfilDoDono()}`;

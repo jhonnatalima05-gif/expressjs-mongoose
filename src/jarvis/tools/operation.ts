@@ -87,6 +87,7 @@ export async function panorama() {
   return {
     agora: new Date().toLocaleString("pt-BR", { timeZone: config.relatorio.timezone }),
     autonomia: config.autonomia,
+    pausado: config.pausado,
     vendas24h,
     vendas7d,
     anuncios,

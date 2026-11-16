@@ -98,12 +98,12 @@ export async function cicloDeMonitoramento() {
 
     // Clientes novos esperando: o suporte atende sozinho.
     const ticketsNovos = await TicketModel.countDocuments({ status: "aberto" });
-    if (ticketsNovos > 0 && process.env.JARVIS_AUTO_SUPORTE !== "false") {
+    if (ticketsNovos > 0 && process.env.JARVIS_AUTO_SUPORTE !== "false" && !config.pausado) {
       await rodarEspecialista("suporte_clientes", `Há ${ticketsNovos} ticket(s) aberto(s). Atenda todos.`);
     }
 
     // Problema crítico novo: o JARVIS investiga e age.
-    if (novosCriticos.length && config.monitor.autoAcao) {
+    if (novosCriticos.length && config.monitor.autoAcao && !config.pausado) {
       const lista = novosCriticos.map((a) => `- [${a.area}] ${a.titulo}: ${a.detalhe}`).join("\n");
       await perguntarAoJarvis(
         `Alertas críticos acabaram de disparar:\n${lista}\n\nInvestigue a causa com os dados, acione os especialistas necessários, resolva o que estiver na sua autonomia e me mande um resumo curto pelo notificar_dono dizendo o que encontrou e o que fez.`

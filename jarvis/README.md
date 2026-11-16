@@ -16,6 +16,43 @@ O JARVIS é o "cabeça" da operação de infoprodutos. Ele vigia tudo, decide de
  (web)          (Meta Ads)    (conteúdo)  (HTML)        (e-mail)       (cenários)
 ```
 
+## Onde ele roda (sem deixar seu computador ligado)
+
+O JARVIS não mora no seu computador: ele roda num **servidor na nuvem (Railway)**, ligado 24 horas por dia. Seu celular, PC, tablet ou navegador são só **controles remotos** pelo Telegram. Pode desligar o computador, viajar ou trocar de aparelho, e ele continua vigiando, decidindo e trabalhando.
+
+```
+ celular / PC / tablet ──Telegram──▶  servidor Railway (24h)  ──▶ Meta Ads, e-mail, vendas
+                                       └─ JARVIS + 6 agentes + banco MongoDB
+```
+
+**Um cérebro só.** Todos os agentes (chefe e especialistas) usam o mesmo modelo de IA, o Claude, por uma única chave (`ANTHROPIC_API_KEY`). Não precisa de ChatGPT nem de outras IAs. O que ele usa de fora são apenas os **sistemas da sua operação** (Meta Ads, Telegram, e-mail e a plataforma de vendas), porque é ali que as ações acontecem.
+
+## Controle pelo celular (Telegram)
+
+Fale com ele como numa conversa: *"Jarvis, como foram as vendas hoje?"*, *"pausa o que estiver dando prejuízo"*, *"o que acontece se eu dobrar o orçamento?"*.
+
+| Comando | O quê |
+|---|---|
+| `/panorama` | Como está a operação agora |
+| `/relatorio` | Relatório completo na hora |
+| `/alertas` | Problemas em aberto |
+| `/aprovacoes` | Pedidos com botões ✅ Aprovar / ❌ Rejeitar |
+| `/autonomia total` | Ele decide e executa sozinho (dentro dos limites) |
+| `/autonomia supervisionada` | Ele prepara e você aprova |
+| `/pausar` · `/retomar` | Botão de pânico: congela/retoma todas as ações automáticas |
+
+Depois de aprovar ou rejeitar, responda *"porque ..."* e ele guarda o motivo para decidir como você da próxima vez. Por segurança, o bot **só obedece ao seu chat** (`TELEGRAM_CHAT_ID`); mensagens de qualquer outra pessoa são ignoradas.
+
+## Colocando no ar (uma vez só)
+
+1. Railway: abra o projeto onde este repositório já está implantado (ou *New Project → Deploy from GitHub*) e adicione um banco **MongoDB** no mesmo projeto.
+2. Em *Variables*, preencha no mínimo: `ANTHROPIC_API_KEY`, `MONGO_URL`, `JARVIS_API_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`. Depois: `META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID`, `RESEND_API_KEY`, `JARVIS_EMAIL_FROM`.
+3. Faça o deploy deste branch. No log deve aparecer `🧠 JARVIS online` e `📱 Controle pelo Telegram ativo`.
+4. No Telegram, mande `/start` para o seu bot.
+5. Preencha `jarvis/perfil-do-dono.md` e faça um novo deploy.
+
+Rode **uma única instância** do servidor: duas cópias ao mesmo tempo disputariam as mensagens do Telegram. Para testar no seu PC, pare a da nuvem antes.
+
 ## O que cada um faz
 
 | Agente | Faz | Ferramentas |
@@ -38,8 +75,10 @@ O JARVIS é o "cabeça" da operação de infoprodutos. Ele vigia tudo, decide de
 
 ## Limites de autonomia (segurança do seu dinheiro)
 
-- `JARVIS_AUTONOMIA=supervisionada` (padrão): ele analisa e prepara tudo, mas gastar dinheiro e responder cliente esperam seu "sim".
-- `JARVIS_AUTONOMIA=total`: ele age sozinho **dentro** dos limites: orçamento até `JARVIS_MAX_ORCAMENTO_DIARIO`, variação até `JARVIS_MAX_VARIACAO_ORCAMENTO_PCT`% por ajuste. Ativar campanha e reembolso acima do limite sempre pedem aprovação.
+- Troque a qualquer momento pelo celular com `/autonomia total` ou `/autonomia supervisionada` (fica salvo). A variável `JARVIS_AUTONOMIA` é só o valor inicial.
+- `/pausar` congela tudo na hora: ele continua vigiando e avisando, mas não executa nada.
+- `supervisionada` (padrão): ele analisa e prepara tudo, mas gastar dinheiro e responder cliente esperam seu "sim".
+- `total`: ele age sozinho **dentro** dos limites: orçamento até `JARVIS_MAX_ORCAMENTO_DIARIO`, variação até `JARVIS_MAX_VARIACAO_ORCAMENTO_PCT`% por ajuste. Ativar campanha e reembolso acima do limite sempre pedem aprovação.
 - Toda ação fica no diário de decisões (`GET /jarvis/decisoes`).
 
 Recomendo começar em **supervisionada** por 1–2 semanas: cada vez que você aprova ou rejeita com um motivo, isso vira memória e ele passa a decidir mais parecido com você. Depois mude para **total**.
@@ -99,7 +138,6 @@ Cada conversa e cada execução de agente consome tokens da API do Claude. O mon
 
 ## Próximos passos sugeridos
 
-- Comandos e aprovações direto pelo Telegram (responder "aprovar" no chat) em vez de curl.
 - Integração com a API da plataforma de pagamento (Cakto/Ticto) para reembolso e dados de vendas completos.
 - Geração de imagens/vídeos de criativos com IAs de imagem.
 - Painel web com o panorama, alertas e aprovações.

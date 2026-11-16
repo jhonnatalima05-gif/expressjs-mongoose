@@ -1,7 +1,7 @@
 // Os especialistas: cada um cuida de uma área e responde ao JARVIS.
 
 import { config } from "../config";
-import { perfilDoDono, REGRAS_GERAIS } from "../persona";
+import { perfilDoDono, regrasGerais } from "../persona";
 import {
   ferramentasArquivos,
   ferramentasComuns,
@@ -99,7 +99,7 @@ export async function rodarEspecialista(nome: NomeEspecialista, tarefa: string, 
   const esp: Especialista = ESPECIALISTAS[nome];
   const system = `${esp.missao}
 
-${REGRAS_GERAIS}
+${regrasGerais()}
 
 ## Quem é o dono e como ele pensa
 ${perfilDoDono()}

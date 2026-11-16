@@ -18,6 +18,9 @@ export const config = {
   // "total": o JARVIS age sozinho DENTRO dos limites abaixo; acima deles, pede aprovação.
   autonomia: (process.env.JARVIS_AUTONOMIA === "total" ? "total" : "supervisionada") as Autonomia,
 
+  // Botão de pânico: com true, o JARVIS só observa e avisa; nada é executado sem aprovação.
+  pausado: false,
+
   limites: {
     // Maior variação de orçamento diário que o JARVIS pode aplicar sozinho, em % por ajuste.
     maxVariacaoOrcamentoPct: num("JARVIS_MAX_VARIACAO_ORCAMENTO_PCT", 20),

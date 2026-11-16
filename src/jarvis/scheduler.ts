@@ -3,6 +3,7 @@ import { cicloDeMonitoramento } from "./monitor";
 import { perguntarAoJarvis } from "./agents/chief";
 import { ReportModel } from "./models";
 import { notificarDono } from "./integrations/telegram";
+import { carregarConfiguracoes } from "./settings";
 
 const PROMPT_RELATORIO = `Gere o relatório diário da operação para o dono.
 Use panorama_operacao e resumo_vendas, e peça ao gestor_trafego a análise de ontem vs últimos 7 dias e ao estrategista a projeção "se continuar assim" para 7 e 30 dias.
@@ -51,11 +52,12 @@ async function talvezRelatorio() {
   }
 }
 
-export function iniciarAgendador() {
+export async function iniciarAgendador() {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn("⚠️ ANTHROPIC_API_KEY ausente: JARVIS desligado.");
     return;
   }
+  await carregarConfiguracoes().catch((err) => console.error("❌ Falha ao carregar configurações:", err));
   const min = config.monitor.intervaloMin;
   setInterval(cicloDeMonitoramento, min * 60_000);
   setInterval(talvezRelatorio, 60_000);

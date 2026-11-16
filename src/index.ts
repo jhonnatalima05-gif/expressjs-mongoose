@@ -6,6 +6,7 @@ import jarvisRoutes from "./jarvis/routes";
 import { SaleModel } from "./jarvis/models";
 import { alertar } from "./jarvis/alerts";
 import { iniciarAgendador } from "./jarvis/scheduler";
+import { iniciarBotTelegram } from "./jarvis/telegram-bot";
 
 const app = express();
 const port = process.env.PORT || 3333;
@@ -158,5 +159,7 @@ user_data: {
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
-  iniciarAgendador();
+  iniciarAgendador()
+    .then(() => (process.env.ANTHROPIC_API_KEY ? iniciarBotTelegram() : undefined))
+    .catch((err) => console.error("❌ Falha ao iniciar o JARVIS:", err));
 });
