@@ -14,6 +14,10 @@ This example starts an [ExpressJS](https://expressjs.com/) server that connects 
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/RM1WxR)
 
+## 🧠 JARVIS
+
+Este servidor agora roda o **JARVIS**, o agente-chefe da operação de infoprodutos. Veja [`jarvis/README.md`](jarvis/README.md).
+
 ## ✨ Features
 
 - Express

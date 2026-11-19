@@ -1,0 +1,151 @@
+import { model, Schema } from "mongoose";
+
+// Venda recebida pelo webhook da plataforma (Ticto, Cakto, Kiwify...).
+const SaleSchema = new Schema(
+  {
+    status: String,
+    aprovada: Boolean,
+    valor: Number,
+    metodo: String,
+    produto: String,
+    clienteEmail: String,
+    clienteNome: String,
+    clienteTelefone: String,
+    plataforma: String,
+    evento: String,
+    pedidoId: { type: String, index: true },
+    raw: Schema.Types.Mixed,
+  },
+  { timestamps: true }
+);
+export const SaleModel = model("JarvisSale", SaleSchema);
+
+// Mensagem/dúvida/problema de cliente (e-mail encaminhado, chat, plataforma).
+const TicketSchema = new Schema(
+  {
+    canal: { type: String, default: "email" },
+    clienteEmail: String,
+    clienteNome: String,
+    assunto: String,
+    mensagem: String,
+    status: { type: String, enum: ["aberto", "respondido", "aguardando_aprovacao", "fechado"], default: "aberto" },
+    resposta: String,
+    categoria: String,
+  },
+  { timestamps: true }
+);
+export const TicketModel = model("JarvisTicket", TicketSchema);
+
+// Alertas: tudo que o dono precisa saber.
+const AlertSchema = new Schema(
+  {
+    chave: { type: String, index: true }, // evita alertar o mesmo problema repetidamente
+    nivel: { type: String, enum: ["info", "atencao", "critico"], default: "atencao" },
+    area: String,
+    titulo: String,
+    detalhe: String,
+    resolvido: { type: Boolean, default: false },
+    notificado: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+export const AlertModel = model("JarvisAlert", AlertSchema);
+
+// Diário de decisões: o que foi decidido, por quê, e o que se espera que aconteça.
+const DecisionSchema = new Schema(
+  {
+    agente: String,
+    decisao: String,
+    motivo: String,
+    impactoEsperado: String,
+    executada: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+export const DecisionModel = model("JarvisDecision", DecisionSchema);
+
+// Ações que passam do limite de autonomia e esperam o "sim" do dono.
+const ApprovalSchema = new Schema(
+  {
+    tipo: String, // ex.: ajustar_orcamento, enviar_email, reembolso
+    descricao: String,
+    payload: Schema.Types.Mixed,
+    status: { type: String, enum: ["pendente", "aprovada", "rejeitada", "executada", "falhou"], default: "pendente" },
+    resultado: String,
+  },
+  { timestamps: true }
+);
+export const ApprovalModel = model("JarvisApproval", ApprovalSchema);
+
+// Ofertas mineradas.
+const OfferSchema = new Schema(
+  {
+    nicho: String,
+    nome: String,
+    promessa: String,
+    evidencias: String, // anúncios ativos, tempo rodando, criativos, etc.
+    links: [String],
+    nota: Number, // 0-10 (nota final do minerador)
+    scoreEscala: Number, // 0-10 calculado pelos dados da Biblioteca
+    estagio: String, // escalada | validando | teste
+    anunciante: String,
+    anunciosAtivos: Number,
+    diasAtivoMax: Number,
+    janelaSazonal: String, // id da janela do calendário (ou "perene")
+    melhorEpoca: String,
+    modelagem: String, // a SUA versão da oferta (original, não cópia)
+    proximoPasso: String,
+  },
+  { timestamps: true }
+);
+export const OfferModel = model("JarvisOffer", OfferSchema);
+
+// Memória do dono: como ele pensa, o que aprovou/rejeitou, preferências.
+const OwnerMemorySchema = new Schema(
+  {
+    aprendizado: String,
+    origem: String,
+  },
+  { timestamps: true }
+);
+export const OwnerMemoryModel = model("JarvisOwnerMemory", OwnerMemorySchema);
+
+const ReportSchema = new Schema(
+  {
+    tipo: { type: String, default: "diario" },
+    conteudo: String,
+  },
+  { timestamps: true }
+);
+export const ReportModel = model("JarvisReport", ReportSchema);
+
+// Conversa de recuperação/vendas com um cliente (PIX gerado e não pago, ou cliente que chamou no WhatsApp).
+const ConversationSchema = new Schema(
+  {
+    origem: { type: String, enum: ["pix_pendente", "cliente_iniciou"], default: "pix_pendente" },
+    canal: { type: String, enum: ["whatsapp", "email"], default: "whatsapp" },
+    telefone: { type: String, index: true },
+    email: { type: String, index: true },
+    nome: String,
+    produto: String,
+    valor: Number,
+    pixCodigo: String,
+    pixLink: String,
+    status: {
+      type: String,
+      enum: ["aguardando", "contatado", "em_conversa", "convertido", "perdido", "nao_contatar", "humano"],
+      default: "aguardando",
+      index: true,
+    },
+    tentativas: { type: Number, default: 0 },
+    followups: { type: Number, default: 0 },
+    proximoContatoEm: Date,
+    ultimaMensagemClienteEm: Date,
+    mensagens: [{ de: String, texto: String, em: { type: Date, default: Date.now } }],
+    ofertasEnviadas: [String],
+    valorRecuperado: Number,
+    notas: String,
+  },
+  { timestamps: true }
+);
+export const ConversationModel = model("JarvisConversation", ConversationSchema);

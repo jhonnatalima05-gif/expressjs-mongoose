@@ -1,0 +1,131 @@
+{
+  "_instrucoes": "Calendário de oportunidades do mercado brasileiro. Datas em MM-DD (a janela pode virar o ano). 'antecedenciaDias' = quantos dias antes do início a oferta deve estar pronta e testada. Edite, adicione ou remova à vontade.",
+  "janelas": [
+    {
+      "id": "ano-novo-metas",
+      "nome": "Ano novo / metas e recomeço",
+      "inicio": "12-26", "fim": "02-15", "antecedenciaDias": 30,
+      "nichos": ["emagrecimento e hábitos", "finanças pessoais e sair das dívidas", "produtividade e organização", "idiomas", "concursos", "renda extra"],
+      "angulos": ["este ano vai ser diferente", "plano de 30/90 dias", "comece do zero"],
+      "custoAnuncio": "CPM costuma ficar baixo em janeiro: ótima época para escalar.",
+      "observacao": "Melhor janela do ano para ofertas de transformação pessoal."
+    },
+    {
+      "id": "verao",
+      "nome": "Verão",
+      "inicio": "11-01", "fim": "02-28", "antecedenciaDias": 30,
+      "nichos": ["treino em casa", "alimentação saudável", "autocuidado", "viagens econômicas"],
+      "angulos": ["rotina possível", "sem academia"],
+      "custoAnuncio": "",
+      "observacao": "Cuidado com promessas de saúde e corpo: as políticas da Meta são rígidas."
+    },
+    {
+      "id": "volta-as-aulas",
+      "nome": "Volta às aulas",
+      "inicio": "01-15", "fim": "03-15", "antecedenciaDias": 21,
+      "nichos": ["material pedagógico para professores", "alfabetização", "reforço escolar para pais", "ENEM e vestibular", "organização de estudos"],
+      "angulos": ["ano letivo começando", "prepare seu filho"],
+      "custoAnuncio": "",
+      "observacao": "Professores compram muito material digital entre janeiro e março."
+    },
+    {
+      "id": "imposto-de-renda",
+      "nome": "Imposto de renda",
+      "inicio": "03-01", "fim": "05-31", "antecedenciaDias": 21,
+      "nichos": ["declaração de IR", "finanças para MEI e autônomos", "investimentos"],
+      "angulos": ["não caia na malha fina", "declare sozinho"],
+      "custoAnuncio": "",
+      "observacao": ""
+    },
+    {
+      "id": "pascoa",
+      "nome": "Páscoa",
+      "inicio": "02-20", "fim": "04-20", "antecedenciaDias": 45,
+      "nichos": ["ovos de páscoa e chocolates para vender", "confeitaria", "renda extra na cozinha"],
+      "angulos": ["fature na páscoa", "receitas que vendem"],
+      "custoAnuncio": "",
+      "observacao": "A data muda todo ano; as vendas de cursos de ovos começam 6 a 8 semanas antes."
+    },
+    {
+      "id": "dia-das-maes",
+      "nome": "Dia das Mães (2º domingo de maio)",
+      "inicio": "04-10", "fim": "05-12", "antecedenciaDias": 30,
+      "nichos": ["presentes artesanais e personalizados", "renda extra para mães", "maternidade", "cestas e confeitaria"],
+      "angulos": ["presente feito à mão", "venda para o Dia das Mães"],
+      "custoAnuncio": "O CPM sobe na semana da data.",
+      "observacao": "Segunda maior data do varejo brasileiro."
+    },
+    {
+      "id": "dia-dos-namorados",
+      "nome": "Dia dos Namorados (12/06)",
+      "inicio": "05-15", "fim": "06-12", "antecedenciaDias": 30,
+      "nichos": ["relacionamentos", "presentes artesanais", "culinária romântica", "cestas"],
+      "angulos": ["surpreenda", "venda cestas e presentes"],
+      "custoAnuncio": "",
+      "observacao": ""
+    },
+    {
+      "id": "festa-junina",
+      "nome": "Festas juninas",
+      "inicio": "05-20", "fim": "07-15", "antecedenciaDias": 30,
+      "nichos": ["receitas juninas para vender", "doces e salgados", "decoração"],
+      "angulos": ["fature no São João"],
+      "custoAnuncio": "",
+      "observacao": "Muito forte no Nordeste: segmente a região."
+    },
+    {
+      "id": "ferias-julho",
+      "nome": "Férias de julho",
+      "inicio": "06-20", "fim": "07-31", "antecedenciaDias": 21,
+      "nichos": ["atividades para crianças", "cursos rápidos", "viagens", "preparação para o 2º semestre"],
+      "angulos": ["aproveite as férias para aprender"],
+      "custoAnuncio": "",
+      "observacao": ""
+    },
+    {
+      "id": "dia-dos-pais",
+      "nome": "Dia dos Pais (2º domingo de agosto)",
+      "inicio": "07-10", "fim": "08-12", "antecedenciaDias": 30,
+      "nichos": ["churrasco", "presentes", "paternidade", "cervejas artesanais"],
+      "angulos": ["presente diferente"],
+      "custoAnuncio": "",
+      "observacao": ""
+    },
+    {
+      "id": "reta-final-enem-concursos",
+      "nome": "Reta final ENEM e concursos",
+      "inicio": "08-01", "fim": "11-10", "antecedenciaDias": 30,
+      "nichos": ["redação ENEM", "revisão para ENEM", "concursos com edital aberto"],
+      "angulos": ["reta final", "revisão em X dias"],
+      "custoAnuncio": "",
+      "observacao": "Confira a data da prova do ano."
+    },
+    {
+      "id": "dia-das-criancas",
+      "nome": "Dia das Crianças (12/10)",
+      "inicio": "09-15", "fim": "10-12", "antecedenciaDias": 30,
+      "nichos": ["festas infantis", "brinquedos artesanais", "atividades educativas", "lembrancinhas para vender"],
+      "angulos": ["faça você mesmo", "renda extra com festas"],
+      "custoAnuncio": "",
+      "observacao": ""
+    },
+    {
+      "id": "black-friday",
+      "nome": "Black Friday",
+      "inicio": "10-20", "fim": "11-30", "antecedenciaDias": 45,
+      "nichos": ["qualquer produto validado com oferta especial", "pacotes e combos"],
+      "angulos": ["maior desconto do ano", "combo exclusivo"],
+      "custoAnuncio": "CPM muito alto: escale só ofertas já validadas, nada de testar produto novo aqui.",
+      "observacao": "Bom momento para vender o produto principal em pacote; ruim para validar oferta nova."
+    },
+    {
+      "id": "natal-fim-de-ano",
+      "nome": "Natal e renda extra de fim de ano",
+      "inicio": "11-01", "fim": "12-24", "antecedenciaDias": 45,
+      "nichos": ["panetones e ceia para vender", "artesanato natalino", "decoração", "presentes", "renda extra de fim de ano"],
+      "angulos": ["fature no Natal", "renda extra para as festas"],
+      "custoAnuncio": "CPM alto em dezembro.",
+      "observacao": "Cursos de 'faça e venda' para o Natal vendem forte de outubro a meados de dezembro."
+    }
+  ]
+}
