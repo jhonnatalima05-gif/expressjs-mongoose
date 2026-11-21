@@ -23,7 +23,7 @@ export function checklist() {
     { item: "Webhook da Cakto validado", ok: tem("CAKTO_WEBHOOK_SECRET"), falta: "CAKTO_WEBHOOK_SECRET (só se usar Cakto)", opcional: true },
     { item: "Conversões da Meta (pixel)", ok: tem("META_PIXEL_ID", "META_ACCESS_TOKEN"), falta: "META_PIXEL_ID e META_ACCESS_TOKEN" },
     { item: "Anúncios (Meta Ads)", ok: tem("META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID"), falta: "META_AD_ACCOUNT_ID" },
-    { item: "WhatsApp (recuperação de PIX)", ok: tem("WHATSAPP_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_VERIFY_TOKEN", "META_APP_SECRET"), falta: "WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_VERIFY_TOKEN, META_APP_SECRET" },
+    { item: "WhatsApp (recuperação de PIX)", ok: tem("WHATSAPP_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_VERIFY_TOKEN", "META_APP_SECRET"), falta: "WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_VERIFY_TOKEN, META_APP_SECRET", opcional: true },
     { item: "Mineração (Apify)", ok: tem("APIFY_TOKEN"), falta: "APIFY_TOKEN" },
     { item: "E-mail (Resend)", ok: tem("RESEND_API_KEY", "JARVIS_EMAIL_FROM"), falta: "RESEND_API_KEY e JARVIS_EMAIL_FROM", opcional: true },
     { item: "Voz premium (ElevenLabs)", ok: tem("ELEVENLABS_API_KEY", "ELEVENLABS_VOICE_ID"), falta: "ELEVENLABS_API_KEY e ELEVENLABS_VOICE_ID", opcional: true },
@@ -39,6 +39,6 @@ export function checklist() {
 
 export function checklistTexto() {
   const c = checklist();
-  const linhas = c.itens.map((i) => `${i.ok ? "✅" : i.opcional ? "⚪" : "❌"} ${i.item}${i.ok ? "" : ` — falta: ${i.falta}`}`);
+  const linhas = c.itens.map((i) => `${i.ok ? "✅" : i.opcional ? "⚪" : "❌"} ${i.item}${i.ok ? "" : i.opcional ? " (opcional, para depois)" : ` — falta: ${i.falta}`}`);
   return `🛠️ Configuração: ${c.prontos}/${c.total} prontos\nAutonomia: ${c.autonomia}${c.pausado ? " (PAUSADO)" : ""}\n\n${linhas.join("\n")}`;
 }
