@@ -518,7 +518,18 @@ export async function cicloRecuperacao() {
   }
 }
 
+const emailConfigurado = () => Boolean(process.env.RESEND_API_KEY && process.env.JARVIS_EMAIL_FROM);
+
 async function contatoAtivo(c: any) {
+  // Sem WhatsApp nem e-mail configurados: só registra (conta no panorama), sem gastar IA.
+  const semCanal = c.canal === "whatsapp" ? !wa.whatsappConfigurado() : !emailConfigurado() || !c.email;
+  if (semCanal) {
+    c.proximoContatoEm = undefined;
+    c.mensagens.push({ de: "sistema", texto: "Sem canal de contato configurado (WhatsApp ou e-mail): cliente não foi contatado." });
+    await c.save();
+    return;
+  }
+
   const tentativa = c.tentativas; // 0 = primeiro contato
   const proximoAtraso = recuperacaoConfig.atrasosMin[tentativa + 1];
   c.tentativas += 1;

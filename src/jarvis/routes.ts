@@ -9,6 +9,7 @@ import { panorama } from "./tools/operation";
 import { gerarRelatorioDiario, rodarMineracao } from "./scheduler";
 import { oportunidades } from "./seasonality";
 import { checklist } from "./status";
+import { montarPainel } from "./painel";
 import { sintetizarFala, vozConfigurada } from "./integrations/voz";
 import { assinaturaValida, extrairMensagens } from "./integrations/whatsapp";
 import { receberMensagemWhatsApp } from "./recovery";
@@ -94,6 +95,9 @@ routes.post("/voz/falar", assincrono(async (req, res) => {
 }));
 
 // Alertas novos para a central falar em voz alta sem ninguém perguntar.
+// Dados da interface da central (vendas, ROAS, agentes, calendário, eventos).
+routes.get("/voz/painel", assincrono(async (_req, res) => res.json(await montarPainel())));
+
 routes.get("/voz/novidades", assincrono(async (req, res) => {
   const desde = new Date(Number(req.query.desde) || Date.now() - 60_000);
   const alertas = await AlertModel.find({ createdAt: { $gt: desde }, nivel: { $in: ["atencao", "critico"] } })
